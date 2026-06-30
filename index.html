@@ -1,1707 +1,968 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="運行記録">
-<meta name="theme-color" content="#4a90e2">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
-<title>運行記録</title>
-<style>
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body {
-    margin: 0; padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Helvetica Neue", sans-serif;
-    background: #f0f2f5;
-    color: #333;
-    -webkit-user-select: none;
-    user-select: none;
-    overscroll-behavior: none;
-    overflow: hidden;
-    height: 100vh;
-    width: 100vw;
-  }
-  input, textarea { -webkit-user-select: text; user-select: text; font-family: inherit; }
-  button { font-family: inherit; cursor: pointer; border: none; background: none; padding: 0; }
-  #app { height: 100vh; width: 100vw; position: relative; }
-
-  /* === Lock screen === */
-  .lock {
-    position: fixed; inset: 0;
-    background: linear-gradient(135deg, #2c3e50, #34495e);
-    color: white;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    z-index: 1000;
-    padding: env(safe-area-inset-top) 20px env(safe-area-inset-bottom);
-  }
-  .lock-icon { font-size: 56px; margin-bottom: 16px; }
-  .lock-title { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
-  .lock-sub { font-size: 13px; opacity: 0.7; margin-bottom: 40px; }
-  .dots { display: flex; gap: 18px; margin-bottom: 40px; }
-  .dot { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.5); transition: all 0.2s; }
-  .dot.filled { background: white; border-color: white; }
-  .dot.error { background: #ff3b30; border-color: #ff3b30; animation: shake 0.4s; }
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-8px); }
-    75% { transform: translateX(8px); }
-  }
-  .keypad { display: grid; grid-template-columns: repeat(3, 75px); gap: 18px; }
-  .kbtn {
-    width: 75px; height: 75px; border-radius: 50%;
-    background: rgba(255,255,255,0.15); color: white;
-    font-size: 28px; font-weight: 300;
-    display: flex; align-items: center; justify-content: center;
-    transition: background 0.1s;
-  }
-  .kbtn:active { background: rgba(255,255,255,0.35); }
-  .kbtn.empty { background: transparent; pointer-events: none; }
-  .kbtn.text { font-size: 14px; background: transparent; }
-
-  /* === Privacy first-run === */
-  .privacy-intro {
-    position: fixed; inset: 0;
-    background: white;
-    z-index: 999;
-    padding: env(safe-area-inset-top) 20px env(safe-area-inset-bottom);
-    overflow-y: auto;
-    display: flex; flex-direction: column;
-  }
-  .privacy-intro-inner {
-    flex: 1; padding-top: 30px;
-  }
-  .privacy-intro h2 { font-size: 22px; margin-bottom: 16px; text-align: center; }
-  .privacy-intro .ic { font-size: 50px; text-align: center; margin-bottom: 10px; }
-  .privacy-intro p { font-size: 14px; line-height: 1.7; color: #555; margin-bottom: 12px; }
-  .privacy-intro ul { font-size: 13px; line-height: 1.8; color: #555; padding-left: 22px; margin-bottom: 16px; }
-  .privacy-intro .confirm {
-    display: flex; align-items: center; gap: 10px;
-    background: #f5f5f7; padding: 12px; border-radius: 10px;
-    margin: 16px 0; font-size: 13px;
-  }
-  .privacy-intro .confirm input { width: 22px; height: 22px; }
-  .privacy-intro .btn-primary {
-    width: 100%; padding: 16px; background: #4a90e2; color: white;
-    border-radius: 12px; font-size: 16px; font-weight: 600;
-    margin-bottom: env(safe-area-inset-bottom, 12px);
-  }
-  .privacy-intro .btn-primary:disabled { background: #ccc; }
-
-  /* === Passcode setup === */
-  .setup-passcode {
-    position: fixed; inset: 0;
-    background: #f0f2f5;
-    z-index: 998;
-    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-  }
-  .setup-passcode .lock-icon { color: #4a90e2; }
-  .setup-passcode .lock-title { color: #333; font-size: 20px; }
-  .setup-passcode .lock-sub { color: #888; }
-  .setup-passcode .dot { border-color: rgba(74,144,226,0.4); }
-  .setup-passcode .dot.filled { background: #4a90e2; border-color: #4a90e2; }
-  .setup-passcode .kbtn { background: rgba(74,144,226,0.1); color: #333; }
-  .setup-passcode .kbtn:active { background: rgba(74,144,226,0.3); }
-
-  /* === Header / Tabbar === */
-  .header {
-    position: fixed; top: 0; left: 0; right: 0;
-    background: white; padding: 12px 16px;
-    padding-top: calc(env(safe-area-inset-top) + 10px);
-    border-bottom: 1px solid #e0e0e0;
-    display: flex; justify-content: space-between; align-items: center;
-    z-index: 100;
-  }
-  .header-title { font-size: 17px; font-weight: 600; }
-  .header-sub { font-size: 12px; color: #666; margin-top: 2px; }
-  .header-btn {
-    color: #007aff; font-size: 15px; padding: 4px 8px;
-    min-width: 32px; min-height: 32px;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .header-btn-icon { font-size: 20px; }
-
-  .main {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-top: calc(env(safe-area-inset-top) + 64px);
-    padding-bottom: calc(env(safe-area-inset-bottom) + 70px);
-  }
-  .main-inner { padding: 12px; }
-
-  .tabbar {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    height: calc(60px + env(safe-area-inset-bottom));
-    background: white;
-    border-top: 1px solid #e0e0e0;
-    display: flex;
-    padding-bottom: env(safe-area-inset-bottom);
-    z-index: 100;
-  }
-  .tab {
-    flex: 1;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    color: #888; font-size: 10px; gap: 3px;
-  }
-  .tab.active { color: #4a90e2; }
-  .tab-icon { font-size: 22px; }
-
-  /* === Summary card === */
-  .summary {
-    background: linear-gradient(135deg, #4a90e2, #357abd);
-    color: white;
-    border-radius: 14px;
-    padding: 16px;
-    margin-bottom: 12px;
-    box-shadow: 0 4px 14px rgba(74,144,226,0.25);
-  }
-  .summary-label { font-size: 12px; opacity: 0.9; }
-  .summary-amount { font-size: 30px; font-weight: bold; margin: 4px 0; }
-  .summary-detail { font-size: 12px; opacity: 0.9; }
-
-  .privacy-banner {
-    background: linear-gradient(135deg, #ff9500, #ff6b00);
-    color: white; padding: 9px 12px; border-radius: 10px;
-    margin-bottom: 10px; font-size: 11px;
-    display: flex; align-items: center; gap: 6px;
-  }
-
-  /* === Ride card === */
-  .ride-card {
-    background: white; border-radius: 12px;
-    padding: 12px 14px; margin-bottom: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    transition: transform 0.1s;
-  }
-  .ride-card:active { transform: scale(0.98); }
-  .ride-top {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 4px;
-  }
-  .ride-time { font-size: 16px; font-weight: 600; color: #4a90e2; }
-  .ride-amount { font-size: 16px; font-weight: 600; }
-  .ride-name { font-size: 14px; margin-bottom: 3px; }
-  .ride-route { font-size: 12px; color: #666; line-height: 1.5; }
-  .ride-tags { display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap; }
-  .tag { font-size: 10px; padding: 2px 7px; background: #e8f1fc; color: #4a90e2; border-radius: 8px; }
-  .tag.discount { background: #fff4e0; color: #d97706; }
-  .tag.wheel { background: #e8f5e9; color: #2e7d32; }
-  .tag.ticket { background: #f3e8ff; color: #7c3aed; }
-
-  .empty {
-    text-align: center; padding: 60px 20px;
-    color: #888; font-size: 13px;
-  }
-  .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
-
-  /* === FAB === */
-  .fab {
-    position: fixed;
-    bottom: calc(80px + env(safe-area-inset-bottom));
-    right: 20px;
-    width: 58px; height: 58px;
-    background: #4a90e2;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    color: white; font-size: 32px; font-weight: 300;
-    box-shadow: 0 4px 14px rgba(74,144,226,0.4);
-    z-index: 50;
-  }
-  .fab:active { transform: scale(0.92); }
-
-  /* === Modal (form) === */
-  .modal {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.4);
-    z-index: 200;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    animation: fadeIn 0.2s;
-  }
-  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-  .modal-sheet {
-    background: #f0f2f5;
-    width: 100%;
-    max-height: 92vh;
-    border-radius: 18px 18px 0 0;
-    overflow: hidden;
-    display: flex; flex-direction: column;
-    animation: slideUp 0.25s;
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  .modal-header {
-    background: white;
-    padding: 14px 16px;
-    border-bottom: 1px solid #e0e0e0;
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .modal-title { font-size: 16px; font-weight: 600; }
-  .modal-body { flex: 1; overflow-y: auto; padding: 12px; -webkit-overflow-scrolling: touch; }
-
-  /* === Form === */
-  .section {
-    background: white; border-radius: 12px;
-    padding: 14px; margin-bottom: 12px;
-  }
-  .input-row { margin-bottom: 14px; }
-  .input-row:last-child { margin-bottom: 0; }
-  .input-label {
-    font-size: 12px; color: #666; margin-bottom: 6px;
-    font-weight: 600;
-  }
-  .input-field {
-    width: 100%; padding: 11px 12px;
-    border: 1px solid #ddd; border-radius: 8px;
-    font-size: 15px; background: #fafafa;
-    font-family: inherit;
-  }
-  .input-field:focus { outline: none; border-color: #4a90e2; background: white; }
-  .input-money { text-align: right; }
-
-  .time-row { display: flex; gap: 8px; align-items: center; }
-  .time-box {
-    flex: 1; padding: 12px;
-    background: #fafafa; border: 1px solid #ddd; border-radius: 8px;
-    font-size: 18px; font-weight: 600; text-align: center;
-  }
-  .time-now {
-    padding: 12px 16px; background: #4a90e2; color: white;
-    border-radius: 8px; font-size: 13px; font-weight: 600;
-    white-space: nowrap;
-  }
-
-  .seg {
-    display: flex; gap: 4px;
-    background: #f0f2f5; padding: 3px; border-radius: 9px;
-    margin-bottom: 8px;
-  }
-  .seg-item {
-    flex: 1; text-align: center; padding: 8px;
-    font-size: 12px; color: #666; border-radius: 7px;
-  }
-  .seg-item.active {
-    background: white; color: #4a90e2; font-weight: 600;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  }
-
-  .check-row {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px; background: #fafafa; border-radius: 8px;
-    cursor: pointer;
-  }
-  .check {
-    width: 26px; height: 26px;
-    border: 2px solid #4a90e2; border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-    background: white; color: transparent;
-    font-size: 16px; font-weight: bold;
-    flex-shrink: 0;
-  }
-  .check.on { background: #4a90e2; color: white; }
-
-  .total-row {
-    background: linear-gradient(135deg, #fff4e0, #fce8c8);
-    border-radius: 12px; padding: 16px;
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 12px;
-  }
-  .total-label { font-size: 14px; color: #8b6b00; font-weight: 600; }
-  .total-amount { font-size: 28px; font-weight: bold; color: #c08300; }
-
-  .btn-primary {
-    width: 100%; padding: 16px; background: #4a90e2; color: white;
-    border-radius: 12px; font-size: 16px; font-weight: 600;
-    box-shadow: 0 4px 10px rgba(74,144,226,0.3);
-  }
-  .btn-primary:active { transform: scale(0.98); }
-  .btn-danger { background: #ff3b30; box-shadow: 0 4px 10px rgba(255,59,48,0.3); }
-  .btn-secondary { background: #e8eaed; color: #333; box-shadow: none; }
-
-  .chips { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
-  .chip {
-    padding: 5px 11px; background: #e8f1fc; color: #4a90e2;
-    border-radius: 14px; font-size: 12px;
-  }
-  .chip:active { background: #4a90e2; color: white; }
-
-  /* === Settings === */
-  .group-title {
-    font-size: 11px; color: #888;
-    margin: 16px 4px 7px; text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  .group { background: white; border-radius: 12px; overflow: hidden; }
-  .row {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 13px 14px; border-bottom: 1px solid #f0f0f0;
-    font-size: 14px;
-  }
-  .row:last-child { border-bottom: none; }
-  .row:active { background: #f5f5f7; }
-  .row-left { display: flex; align-items: center; gap: 11px; flex: 1; }
-  .row-icon {
-    width: 28px; height: 28px; border-radius: 7px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 15px; color: white;
-    flex-shrink: 0;
-  }
-  .row-value { color: #888; font-size: 13px; display: flex; align-items: center; gap: 4px; }
-  .row.danger { color: #ff3b30; }
-
-  .toggle {
-    width: 46px; height: 26px;
-    background: #34c759; border-radius: 14px;
-    position: relative; transition: background 0.2s;
-    flex-shrink: 0;
-  }
-  .toggle::after {
-    content: ''; position: absolute; top: 2px; left: 22px;
-    width: 22px; height: 22px; border-radius: 50%;
-    background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    transition: left 0.2s;
-  }
-  .toggle.off { background: #e0e0e0; }
-  .toggle.off::after { left: 2px; }
-
-  .mode-opt {
-    padding: 13px 14px; border-bottom: 1px solid #f0f0f0;
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .mode-opt:last-child { border-bottom: none; }
-  .mode-opt-label { font-size: 14px; }
-  .mode-opt-ex { font-size: 12px; color: #888; margin-top: 2px; }
-  .check-mark { color: #4a90e2; font-size: 18px; }
-
-  /* === Detail sheet === */
-  .detail-grid .row { display: flex; justify-content: space-between; }
-  .detail-grid .row-label { color: #666; }
-  .detail-grid .row-value-text { font-weight: 500; color: #333; text-align: right; }
-
-  /* === Warning dialog === */
-  .warning-modal {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 300;
-    display: flex; align-items: center; justify-content: center;
-    padding: 20px;
-  }
-  .warning-box {
-    background: white; border-radius: 16px;
-    padding: 20px; width: 100%; max-width: 320px;
-    text-align: center;
-  }
-  .warning-icon { font-size: 44px; margin-bottom: 10px; }
-  .warning-title { font-size: 16px; font-weight: 600; margin-bottom: 10px; }
-  .warning-text {
-    font-size: 13px; color: #666; line-height: 1.6;
-    margin-bottom: 14px; text-align: left;
-  }
-  .warning-text strong { color: #ff3b30; }
-  .warning-check {
-    display: flex; align-items: center; gap: 8px;
-    background: #fff4e0; padding: 10px; border-radius: 8px;
-    margin-bottom: 14px; font-size: 12px; color: #8b6b00;
-    text-align: left; cursor: pointer;
-  }
-  .warning-buttons { display: flex; gap: 8px; }
-  .warning-btn {
-    flex: 1; padding: 12px; border-radius: 9px;
-    font-size: 14px; font-weight: 600;
-  }
-  .warning-btn.cancel { background: #f0f0f0; color: #333; }
-  .warning-btn.danger { background: #ff3b30; color: white; }
-  .warning-btn.danger:disabled { background: #ccc; }
-
-  /* === Stat grid === */
-  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-  .stat-box {
-    background: white; padding: 14px; border-radius: 12px; text-align: center;
-  }
-  .stat-box.hl { background: linear-gradient(135deg, #4a90e2, #357abd); color: white; }
-  .stat-label { font-size: 11px; color: #666; margin-bottom: 4px; }
-  .stat-box.hl .stat-label { color: rgba(255,255,255,0.9); }
-  .stat-value { font-size: 20px; font-weight: bold; }
-  .stat-box.hl .stat-value { color: white; }
-
-  .month-nav {
-    background: white; border-radius: 12px;
-    padding: 12px; margin-bottom: 12px;
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .month-nav-btn {
-    color: #4a90e2; font-size: 22px;
-    padding: 4px 12px;
-  }
-  .month-title { font-size: 16px; font-weight: 600; }
-
-  .daily-list { background: white; border-radius: 12px; overflow: hidden; }
-  .daily-row {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 12px 14px; border-bottom: 1px solid #f0f0f0;
-  }
-  .daily-row:last-child { border-bottom: none; }
-  .daily-date { font-size: 13px; }
-  .daily-count { font-size: 11px; color: #888; margin-left: 6px; }
-  .daily-amount { font-size: 14px; font-weight: 600; color: #4a90e2; }
-
-  /* Customer master list */
-  .cust-row {
-    display: flex; align-items: center; gap: 12px;
-    padding: 12px 14px; border-bottom: 1px solid #f0f0f0;
-  }
-  .cust-row:last-child { border-bottom: none; }
-  .cust-avatar {
-    width: 36px; height: 36px; border-radius: 50%;
-    background: linear-gradient(135deg, #4a90e2, #357abd);
-    color: white; font-size: 13px; font-weight: 600;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  .cust-info { flex: 1; min-width: 0; }
-  .cust-name { font-size: 14px; font-weight: 500; }
-  .cust-meta { font-size: 11px; color: #888; margin-top: 2px; }
-
-  /* Toast */
-  .toast {
-    position: fixed;
-    top: 80px; left: 50%; transform: translateX(-50%);
-    background: rgba(0,0,0,0.85); color: white;
-    padding: 10px 18px; border-radius: 22px;
-    font-size: 13px; z-index: 9999;
-    animation: toastIn 0.3s;
-  }
-  @keyframes toastIn {
-    from { opacity: 0; transform: translate(-50%, -10px); }
-    to { opacity: 1; transform: translate(-50%, 0); }
-  }
-
-  /* Background blur (when app goes to background) */
-  .bg-blur {
-    position: fixed; inset: 0;
-    background: rgba(74, 144, 226, 0.95);
-    color: white;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    z-index: 9000;
-    backdrop-filter: blur(20px);
-  }
-  .bg-blur-icon { font-size: 60px; margin-bottom: 12px; }
-  .bg-blur-text { font-size: 16px; }
-
-  .hide { display: none !important; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1d6fd6" />
+  <title>介護タクシー運行記録アプリ</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    :root {
+      --bg: #eef5ff;
+      --card: #ffffff;
+      --line: #dbe7f7;
+      --text: #1d2a3a;
+      --sub: #67788f;
+      --primary: #1d6fd6;
+      --primary-2: #0d57b5;
+      --warn: #fff8e7;
+      --danger: #d64545;
+      --ok: #0f9f67;
+      --shadow: 0 10px 28px rgba(18, 64, 124, 0.10);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+      background: linear-gradient(180deg, #f6faff 0%, var(--bg) 100%);
+      color: var(--text);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .app {
+      max-width: 720px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding-bottom: 88px;
+    }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(246, 250, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 16px 12px;
+    }
+    .topbar h1 { margin: 0; font-size: 20px; }
+    .topbar .sub { margin-top: 4px; color: var(--sub); font-size: 13px; }
+    .page { padding: 14px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+      margin-bottom: 14px;
+    }
+    .hero {
+      background: linear-gradient(135deg, var(--primary), #5ca2ff);
+      color: #fff;
+      border: none;
+    }
+    .hero .mini { opacity: 0.9; font-size: 12px; }
+    .hero .sum { font-size: 30px; font-weight: 800; margin-top: 6px; }
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .section-title h2 { margin: 0; font-size: 17px; }
+    .muted { color: var(--sub); font-size: 13px; }
+    .ride {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #fbfdff;
+    }
+    .ride-head, .row, .between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .ride-head { margin-bottom: 8px; }
+    .ride .name { font-weight: 700; }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: #e9f2ff;
+      color: var(--primary-2);
+      margin-right: 6px;
+      margin-top: 6px;
+    }
+    .total { font-weight: 800; font-size: 18px; }
+    button, .btn {
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+    }
+    button.secondary, .btn.secondary {
+      background: #edf4ff;
+      color: var(--primary-2);
+      border: 1px solid #cfe0f6;
+    }
+    button.ghost { background: transparent; color: var(--primary-2); border: 1px solid #cfe0f6; }
+    button.danger { background: var(--danger); }
+    .mini-btn { width: auto; padding: 8px 10px; font-size: 13px; border-radius: 10px; }
+    .fab {
+      position: fixed;
+      right: 18px;
+      bottom: 88px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      font-size: 32px;
+      line-height: 1;
+      box-shadow: 0 14px 30px rgba(29, 111, 214, 0.4);
+      z-index: 20;
+    }
+    .tabs {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
+      z-index: 30;
+    }
+    .tab {
+      text-align: center;
+      color: var(--sub);
+      font-size: 12px;
+      background: transparent;
+      border: none;
+      padding: 8px 6px;
+      border-radius: 12px;
+    }
+    .tab.active { background: #eaf3ff; color: var(--primary-2); font-weight: 700; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    label { display: block; font-size: 13px; color: var(--sub); margin-bottom: 6px; font-weight: 700; }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid #cfe0f6;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 16px;
+      background: #fff;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+    textarea { min-height: 86px; resize: vertical; }
+    .hint {
+      font-size: 12px;
+      color: var(--sub);
+      margin-top: -6px;
+      margin-bottom: 10px;
+    }
+    .sum-box {
+      background: var(--warn);
+      border: 1px solid #f3df9c;
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .sum-box strong { font-size: 22px; }
+    .notice {
+      background: #fff9ea;
+      border: 1px solid #ffe2a8;
+      color: #7a5a09;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+    .hidden { display: none !important; }
+    .sheet, .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+    }
+    .overlay {
+      background: rgba(13, 31, 54, 0.38);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 12px;
+    }
+    .overlay.show { display: flex; }
+    .sheet-body {
+      background: #fff;
+      width: 100%;
+      max-width: 720px;
+      max-height: 92vh;
+      overflow: auto;
+      border-radius: 24px 24px 0 0;
+      padding: 16px;
+      box-shadow: 0 -10px 30px rgba(0,0,0,.15);
+    }
+    .center-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 420px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+    .pin-dots { display: flex; gap: 10px; justify-content: center; margin: 16px 0; }
+    .pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #a9c6eb; }
+    .pin-dot.filled { background: var(--primary); border-color: var(--primary); }
+    .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .keypad button { font-size: 22px; padding: 16px; border-radius: 16px; }
+    .small { font-size: 12px; color: var(--sub); }
+    .list-item {
+      padding: 12px 0;
+      border-bottom: 1px solid #eef3fb;
+    }
+    .list-item:last-child { border-bottom: none; }
+    .pill-link { color: var(--primary-2); font-weight: 700; font-size: 13px; }
+    .empty {
+      text-align: center;
+      padding: 24px 12px;
+      color: var(--sub);
+    }
+    @media (min-width: 768px) {
+      .page { padding: 20px; }
+      .fab { right: max(18px, calc((100vw - 720px) / 2 + 18px)); }
+    }
+  </style>
 </head>
 <body>
-<div id="app"></div>
+  <div id="privacyScreen" class="center-screen hidden">
+    <div class="auth-card">
+      <h2 style="margin-top:0">はじめに</h2>
+      <p>このアプリは、端末の中に記録を保存します。</p>
+      <div class="notice">個人情報は入れすぎないようにしてください。<br>お名前は姓のみ登録がおすすめです。</div>
+      <label style="display:flex; gap:8px; align-items:flex-start; font-weight:400; color:var(--text)">
+        <input id="agreeCheck" type="checkbox" style="width:auto; margin:3px 0 0 0">
+        <span>内容を確認しました</span>
+      </label>
+      <button id="agreeBtn" disabled>同意して次へ</button>
+    </div>
+  </div>
 
-<script>
-/* ==========================================================================
-   介護タクシー運行記録アプリ (PWA)
-   - データは全てlocalStorage内に保存（簡易暗号化）
-   - パスコード認証必須
-   ========================================================================== */
+  <div id="passcodeSetupScreen" class="center-screen hidden">
+    <div class="auth-card">
+      <h2 id="setupTitle" style="margin-top:0">4桁のパスコードを決める</h2>
+      <p id="setupText" class="small">あとでアプリを開く時に使います。</p>
+      <div id="setupDots" class="pin-dots"></div>
+      <div id="setupKeypad" class="keypad"></div>
+    </div>
+  </div>
 
-// ====== 簡易暗号化 (XOR + Base64) ======
-const ENC_KEY = 'taxi-record-app-v1-key';
-function xorCipher(text, key) {
-  let out = '';
-  for (let i = 0; i < text.length; i++) {
-    out += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
-  }
-  return out;
-}
-function encrypt(obj) {
-  try { return btoa(unescape(encodeURIComponent(xorCipher(JSON.stringify(obj), ENC_KEY)))); }
-  catch(e) { return ''; }
-}
-function decrypt(str) {
-  try { return JSON.parse(xorCipher(decodeURIComponent(escape(atob(str))), ENC_KEY)); }
-  catch(e) { return null; }
-}
+  <div id="lockScreen" class="center-screen hidden">
+    <div class="auth-card">
+      <h2 style="margin-top:0">ロック中</h2>
+      <p class="small">4桁のパスコードを入れてください。</p>
+      <div id="lockDots" class="pin-dots"></div>
+      <div id="lockError" class="notice hidden" style="background:#fff0f0;border-color:#ffcccc;color:#9c2b2b">パスコードが違います。</div>
+      <div id="lockKeypad" class="keypad"></div>
+    </div>
+  </div>
 
-// ====== ストレージ ======
-const STORE = {
-  get(key, fallback) {
-    const raw = localStorage.getItem(key);
-    if (!raw) return fallback;
-    const dec = decrypt(raw);
-    return dec === null ? fallback : dec;
-  },
-  set(key, value) {
-    localStorage.setItem(key, encrypt(value));
-  },
-  raw(key, fallback) {
-    return localStorage.getItem(key) || fallback;
-  },
-  rawSet(key, value) {
-    localStorage.setItem(key, value);
-  }
-};
-
-// ====== State ======
-const state = {
-  rides: [],         // [{id, date, time, customerId?, name, pickup, dropoff, meter, careBase, wheel, attend, discount:{type:'none'|'amount'|'percent', value}, ticket, total, createdAt}]
-  customers: [],     // [{id, code, lastName, memo, frequentPickup, frequentDropoff, createdAt}]
-  settings: {
-    nameDisplayMode: 'last',  // full | last | initial | code
-    placeDisplayMode: 'short', // full | short
-    autoLockMinutes: 1,
-    screenshotWarn: true,
-    privacyMaskMode: true,
-    autoDeleteMonths: 0  // 0=off, 12=1year
-  }
-};
-
-let currentTab = 'today';
-let modalContext = null;
-let lockState = { input: '', lastActivity: Date.now() };
-
-// ====== 起動フロー ======
-function init() {
-  loadAll();
-  
-  // 初回起動チェック
-  if (!STORE.raw('seen-privacy')) {
-    renderPrivacyIntro();
-    return;
-  }
-  
-  // パスコード設定チェック
-  if (!STORE.raw('passcode-hash')) {
-    renderSetupPasscode();
-    return;
-  }
-  
-  // ロック画面
-  renderLock();
-  
-  // 自動データ削除
-  autoDeleteOldData();
-}
-
-function loadAll() {
-  state.rides = STORE.get('rides', []);
-  state.customers = STORE.get('customers', []);
-  const s = STORE.get('settings', null);
-  if (s) state.settings = Object.assign(state.settings, s);
-}
-
-function saveRides() { STORE.set('rides', state.rides); }
-function saveCustomers() { STORE.set('customers', state.customers); }
-function saveSettings() { STORE.set('settings', state.settings); }
-
-// ====== 初回プライバシー説明 ======
-function renderPrivacyIntro() {
-  document.getElementById('app').innerHTML = `
-    <div class="privacy-intro">
-      <div class="privacy-intro-inner">
-        <div class="ic">🔒</div>
-        <h2>運行記録アプリへようこそ</h2>
-        <p>このアプリは介護タクシー運行記録を <strong>iPhone内に暗号化保存</strong> します。クラウドへの送信は一切ありません。</p>
-        
-        <p><strong>個人情報保護について：</strong></p>
-        <ul>
-          <li>データは全てこのiPhone内にのみ保存</li>
-          <li>パスコード認証で保護</li>
-          <li>氏名はマスキング表示可能</li>
-          <li>1年経過データの自動削除設定可</li>
-        </ul>
-        
-        <p><strong>ご注意：</strong></p>
-        <ul>
-          <li>万一の漏えい時の責任は利用者ご自身となります</li>
-          <li>このアプリは個人利用を目的としています</li>
-          <li>運行記録の公式保管は別途必要です</li>
-        </ul>
-        
-        <div class="confirm">
-          <input type="checkbox" id="agree" onchange="document.getElementById('agreeBtn').disabled = !this.checked">
-          <label for="agree">上記を理解し、自己責任で利用します</label>
+  <div id="appRoot" class="app hidden">
+    <div class="topbar">
+      <div class="between">
+        <div>
+          <h1>介護タクシー運行記録</h1>
+          <div class="sub" id="todayLabel"></div>
         </div>
-      </div>
-      <button class="btn-primary" id="agreeBtn" disabled onclick="agreePrivacy()">同意して次へ</button>
-    </div>
-  `;
-}
-
-function agreePrivacy() {
-  STORE.rawSet('seen-privacy', '1');
-  renderSetupPasscode();
-}
-
-// ====== パスコード初期設定 ======
-let setupPasscodeStep = 1; // 1=入力, 2=確認
-let setupPasscodeFirst = '';
-let setupPasscodeInput = '';
-
-function renderSetupPasscode() {
-  setupPasscodeStep = 1;
-  setupPasscodeFirst = '';
-  setupPasscodeInput = '';
-  drawSetupPasscode();
-}
-
-function drawSetupPasscode() {
-  const title = setupPasscodeStep === 1 ? 'パスコードを設定' : 'もう一度入力';
-  const sub = setupPasscodeStep === 1 ? '4桁の暗証番号を設定してください' : '確認のため再度入力してください';
-  document.getElementById('app').innerHTML = `
-    <div class="setup-passcode">
-      <div class="lock-icon">🔐</div>
-      <div class="lock-title">${title}</div>
-      <div class="lock-sub">${sub}</div>
-      <div class="dots">
-        ${[0,1,2,3].map(i => `<div class="dot ${i < setupPasscodeInput.length ? 'filled' : ''}"></div>`).join('')}
-      </div>
-      <div class="keypad">
-        ${[1,2,3,4,5,6,7,8,9].map(n => `<button class="kbtn" onclick="setupKey('${n}')">${n}</button>`).join('')}
-        <div class="kbtn empty"></div>
-        <button class="kbtn" onclick="setupKey('0')">0</button>
-        <button class="kbtn text" onclick="setupKey('del')">削除</button>
+        <button class="secondary mini-btn" id="lockBtn">🔒 ロック</button>
       </div>
     </div>
-  `;
-}
 
-function setupKey(k) {
-  if (k === 'del') {
-    setupPasscodeInput = setupPasscodeInput.slice(0, -1);
-  } else if (setupPasscodeInput.length < 4) {
-    setupPasscodeInput += k;
-  }
-  drawSetupPasscode();
-  if (setupPasscodeInput.length === 4) {
-    setTimeout(() => {
-      if (setupPasscodeStep === 1) {
-        setupPasscodeFirst = setupPasscodeInput;
-        setupPasscodeInput = '';
-        setupPasscodeStep = 2;
-        drawSetupPasscode();
+    <div id="page-home" class="page"></div>
+    <div id="page-stats" class="page hidden"></div>
+    <div id="page-customers" class="page hidden"></div>
+    <div id="page-settings" class="page hidden"></div>
+
+    <button class="fab" id="addRideFab">＋</button>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="home">今日</button>
+      <button class="tab" data-tab="stats">集計</button>
+      <button class="tab" data-tab="customers">顧客</button>
+      <button class="tab" data-tab="settings">設定</button>
+    </div>
+  </div>
+
+  <div id="overlay" class="overlay">
+    <div class="sheet-body" id="sheetBody"></div>
+  </div>
+
+  <script>
+    const WHEEL_DEFAULT = 0;
+    const HIGHWAY_DEFAULT = 0;
+    const storageKeys = {
+      config: 'taxi_app_config_v2',
+      rides: 'taxi_app_rides_v2',
+      customers: 'taxi_app_customers_v2'
+    };
+
+    const state = {
+      config: {
+        agreed: false,
+        passcode: '',
+        autoDeleteYear: true,
+        nameMode: 'lastname'
+      },
+      rides: [],
+      customers: [],
+      activeTab: 'home',
+      setupPin: '',
+      setupConfirm: '',
+      lockPin: '',
+      editingRideId: null,
+      editingCustomerId: null,
+      lastActive: Date.now()
+    };
+
+    function enc(text) {
+      return btoa(unescape(encodeURIComponent(text)));
+    }
+    function dec(text) {
+      try { return decodeURIComponent(escape(atob(text))); } catch { return ''; }
+    }
+    function saveConfig() { localStorage.setItem(storageKeys.config, enc(JSON.stringify(state.config))); }
+    function saveRides() { localStorage.setItem(storageKeys.rides, enc(JSON.stringify(state.rides))); }
+    function saveCustomers() { localStorage.setItem(storageKeys.customers, enc(JSON.stringify(state.customers))); }
+    function loadAll() {
+      const c = dec(localStorage.getItem(storageKeys.config) || '');
+      const r = dec(localStorage.getItem(storageKeys.rides) || '');
+      const m = dec(localStorage.getItem(storageKeys.customers) || '');
+      if (c) state.config = { ...state.config, ...JSON.parse(c) };
+      if (r) state.rides = JSON.parse(r).map(normalizeRide);
+      if (m) state.customers = JSON.parse(m).map(normalizeCustomer);
+    }
+    function normalizeRide(r={}) {
+      const ride = {
+        id: r.id || uid('ride'),
+        date: r.date || todayStr(),
+        time: r.time || '',
+        name: r.name || '',
+        pickup: r.pickup || '',
+        dropoff: r.dropoff || '',
+        meter: num(r.meter),
+        careBase: num(r.careBase),
+        wheelFee: num(r.wheelFee ?? r.wheel ?? 0),
+        attend: num(r.attend),
+        highway: num(r.highway),
+        discountType: r.discountType || (r.discount?.type || 'none'),
+        discountValue: num(r.discountValue ?? r.discount?.value ?? 0),
+        memo: r.memo || ''
+      };
+      ride.total = calcTotal(ride);
+      return ride;
+    }
+    function normalizeCustomer(c={}) {
+      return {
+        id: c.id || uid('cust'),
+        code: String(c.code || nextCustomerCode()),
+        lastName: c.lastName || c.name || '',
+        memo: c.memo || '',
+        frequentPickup: c.frequentPickup || '',
+        frequentDropoff: c.frequentDropoff || ''
+      };
+    }
+    function todayStr() {
+      const d = new Date();
+      return d.toISOString().slice(0, 10);
+    }
+    function nowTime() {
+      const d = new Date();
+      return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    }
+    function yen(n) {
+      return '¥' + Number(n || 0).toLocaleString('ja-JP');
+    }
+    function uid(prefix='id') {
+      return prefix + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    }
+    function num(v) {
+      const n = parseInt(v, 10);
+      return Number.isFinite(n) ? n : 0;
+    }
+    function escapeHtml(s='') {
+      return s.replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    }
+    function calcTotal(ride) {
+      const base = num(ride.meter) + num(ride.careBase) + num(ride.wheelFee) + num(ride.attend) + num(ride.highway);
+      const discount = ride.discountType === 'percent'
+        ? Math.floor(base * num(ride.discountValue) / 100)
+        : ride.discountType === 'amount'
+          ? num(ride.discountValue)
+          : 0;
+      return Math.max(0, base - discount);
+    }
+    function maybeAutoDelete() {
+      if (!state.config.autoDeleteYear) return;
+      const limit = new Date();
+      limit.setFullYear(limit.getFullYear() - 1);
+      const before = state.rides.length;
+      state.rides = state.rides.filter(r => new Date(r.date) >= limit);
+      if (state.rides.length !== before) saveRides();
+    }
+    function maskName(name) {
+      if (!name) return '未登録';
+      const mode = state.config.nameMode;
+      if (mode === 'full') return name;
+      if (mode === 'initial') return name.slice(0,1) + '.';
+      if (mode === 'code') {
+        const customer = state.customers.find(c => c.lastName === name || c.fullName === name);
+        return customer ? '#' + customer.code : '#---';
+      }
+      return name;
+    }
+    function locationsShort(text='') {
+      if (!text) return '未入力';
+      return text.length > 10 ? text.slice(0, 10) + '…' : text;
+    }
+    function ridesToday() { return state.rides.filter(r => r.date === todayStr()).sort((a,b) => (a.time > b.time ? 1 : -1)); }
+    function totalOf(list) { return list.reduce((sum, r) => sum + num(r.total), 0); }
+
+    function renderHome() {
+      const list = ridesToday();
+      document.getElementById('todayLabel').textContent = new Date().toLocaleDateString('ja-JP', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
+      const html = `
+        <div class="card hero">
+          <div class="mini">本日の合計</div>
+          <div class="sum">${yen(totalOf(list))}</div>
+          <div class="mini">件数 ${list.length}件</div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>今日の記録</h2><span class="muted">新しい順に確認できます</span></div>
+          ${list.length ? list.map(r => `
+            <div class="ride" onclick="openRideForm('${r.id}')">
+              <div class="ride-head">
+                <div>
+                  <div class="name">${escapeHtml(maskName(r.name))}</div>
+                  <div class="muted">${escapeHtml(locationsShort(r.pickup))} → ${escapeHtml(locationsShort(r.dropoff))}</div>
+                </div>
+                <div style="text-align:right">
+                  <div class="muted">${escapeHtml(r.time || '')}</div>
+                  <div class="total">${yen(r.total)}</div>
+                </div>
+              </div>
+              <div>
+                ${num(r.wheelFee) ? '<span class="badge">車イス ' + yen(r.wheelFee) + '</span>' : ''}
+                ${num(r.highway) ? '<span class="badge">高速 ' + yen(r.highway) + '</span>' : ''}
+                ${num(r.careBase) ? '<span class="badge">介助 ' + yen(r.careBase) + '</span>' : ''}
+                ${r.discountType !== 'none' ? '<span class="badge">割引あり</span>' : ''}
+              </div>
+            </div>`).join('') : `<div class="empty">まだ記録がありません。<br>右下の「＋」から追加できます。</div>`}
+        </div>
+      `;
+      document.getElementById('page-home').innerHTML = html;
+    }
+
+    function renderStats() {
+      const currentMonth = todayStr().slice(0,7);
+      const monthRides = state.rides.filter(r => (r.date || '').slice(0,7) === currentMonth);
+      const dayMap = {};
+      monthRides.forEach(r => { dayMap[r.date] = (dayMap[r.date] || 0) + num(r.total); });
+      const days = Object.entries(dayMap).sort((a,b) => a[0] < b[0] ? 1 : -1);
+      const meter = monthRides.reduce((s,r) => s + num(r.meter), 0);
+      const care = monthRides.reduce((s,r) => s + num(r.careBase), 0);
+      const wheel = monthRides.reduce((s,r) => s + num(r.wheelFee), 0);
+      const highway = monthRides.reduce((s,r) => s + num(r.highway), 0);
+      document.getElementById('page-stats').innerHTML = `
+        <div class="card">
+          <div class="section-title"><h2>今月の集計</h2><span class="muted">${currentMonth.replace('-', '年')}月</span></div>
+          <div class="grid-2">
+            <div class="card" style="margin:0"><div class="muted">売上合計</div><div class="total">${yen(totalOf(monthRides))}</div></div>
+            <div class="card" style="margin:0"><div class="muted">件数</div><div class="total">${monthRides.length}件</div></div>
+          </div>
+          <div class="grid-2" style="margin-top:10px">
+            <div class="card" style="margin:0"><div class="muted">メーター運賃</div><div>${yen(meter)}</div></div>
+            <div class="card" style="margin:0"><div class="muted">基本介助料</div><div>${yen(care)}</div></div>
+            <div class="card" style="margin:0"><div class="muted">車イス料金</div><div>${yen(wheel)}</div></div>
+            <div class="card" style="margin:0"><div class="muted">高速料金</div><div>${yen(highway)}</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>日ごとの売上</h2><span class="pill-link" onclick="exportCsv()">CSVを書き出す</span></div>
+          ${days.length ? days.map(([date,total]) => `<div class="list-item between"><span>${date}</span><strong>${yen(total)}</strong></div>`).join('') : '<div class="empty">今月のデータがありません。</div>'}
+        </div>
+      `;
+    }
+
+    function renderCustomers() {
+      document.getElementById('page-customers').innerHTML = `
+        <div class="card">
+          <div class="section-title"><h2>顧客マスター</h2><button class="mini-btn" onclick="openCustomerForm()">＋追加</button></div>
+          <div class="notice">姓のみ登録がおすすめです。電話番号や詳しい住所は入れないでください。</div>
+          ${state.customers.length ? state.customers.map(c => `
+            <div class="list-item" onclick="openCustomerForm('${c.id}')">
+              <div class="between"><strong>#${escapeHtml(c.code)} ${escapeHtml(c.lastName || '')}</strong><span class="muted">編集</span></div>
+              <div class="muted">${escapeHtml(c.memo || 'メモなし')}</div>
+              <div class="muted">${escapeHtml(c.frequentPickup || '')}${c.frequentPickup || c.frequentDropoff ? ' → ' : ''}${escapeHtml(c.frequentDropoff || '')}</div>
+            </div>`).join('') : '<div class="empty">まだ顧客登録がありません。</div>'}
+        </div>
+      `;
+    }
+
+    function renderSettings() {
+      document.getElementById('page-settings').innerHTML = `
+        <div class="card">
+          <div class="section-title"><h2>表示設定</h2></div>
+          <label>氏名の表示</label>
+          <select id="nameModeSelect" onchange="changeNameMode(this.value)">
+            <option value="lastname" ${state.config.nameMode === 'lastname' ? 'selected' : ''}>姓のみ</option>
+            <option value="full" ${state.config.nameMode === 'full' ? 'selected' : ''}>そのまま表示</option>
+            <option value="initial" ${state.config.nameMode === 'initial' ? 'selected' : ''}>イニシャル風</option>
+            <option value="code" ${state.config.nameMode === 'code' ? 'selected' : ''}>顧客コード</option>
+          </select>
+          <label style="display:flex; gap:8px; align-items:center; font-weight:400; color:var(--text)">
+            <input type="checkbox" ${state.config.autoDeleteYear ? 'checked' : ''} style="width:auto; margin:0" onchange="toggleAutoDelete(this.checked)">
+            <span>1年を過ぎたデータを自動削除</span>
+          </label>
+        </div>
+        <div class="card">
+          <div class="section-title"><h2>データ</h2></div>
+          <button class="secondary" onclick="exportCsv()">CSVを書き出す</button>
+          <div style="height:10px"></div>
+          <button class="secondary" onclick="exportBackup()">バックアップを書き出す</button>
+          <div class="hint">機種変更やキャッシュ削除に備えて、定期的な保存がおすすめです。</div>
+          <input id="restoreFileInput" type="file" accept="application/json,.json" onchange="restoreBackupFile(this)" style="display:none">
+          <div style="height:2px"></div>
+          <button class="secondary" onclick="document.getElementById('restoreFileInput').click()">バックアップを復元する</button>
+          <div class="hint">復元すると、今の記録と顧客データはバックアップ内容で置き換わります。</div>
+          <div style="height:10px"></div>
+          <button class="danger" onclick="clearAllData()">全データ削除</button>
+        </div>
+      `;
+    }
+
+    function switchTab(tab) {
+      state.activeTab = tab;
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+      ['home','stats','customers','settings'].forEach(id => {
+        document.getElementById('page-' + id).classList.toggle('hidden', id !== tab);
+      });
+      document.getElementById('addRideFab').classList.toggle('hidden', tab !== 'home');
+      renderAll();
+    }
+
+    function renderAll() {
+      renderHome();
+      renderStats();
+      renderCustomers();
+      renderSettings();
+    }
+
+    function openSheet(html) {
+      document.getElementById('sheetBody').innerHTML = html;
+      document.getElementById('overlay').classList.add('show');
+    }
+    function closeSheet() {
+      document.getElementById('overlay').classList.remove('show');
+    }
+
+    function rideDiscountSelect(type) {
+      const field = document.getElementById('discountValueWrap');
+      field.classList.toggle('hidden', type === 'none');
+      calcPreviewTotal();
+    }
+
+    function fillFromCustomer(selectEl) {
+      const id = selectEl.value;
+      if (!id) return;
+      const c = state.customers.find(x => x.id === id);
+      if (!c) return;
+      document.getElementById('ride-name').value = c.lastName || '';
+      document.getElementById('ride-pickup').value = c.frequentPickup || '';
+      document.getElementById('ride-dropoff').value = c.frequentDropoff || '';
+      if (c.memo) document.getElementById('ride-memo').value = c.memo;
+      calcPreviewTotal();
+    }
+
+    function openRideForm(id='') {
+      const ride = state.rides.find(r => r.id === id) || {
+        id: '', date: todayStr(), time: nowTime(), name:'', pickup:'', dropoff:'', meter:0, careBase:0, wheelFee:WHEEL_DEFAULT, attend:0, highway:HIGHWAY_DEFAULT,
+        discountType:'none', discountValue:0, memo:'', total:0
+      };
+      state.editingRideId = id || null;
+      openSheet(`
+        <div class="section-title"><h2>${id ? '記録を編集' : '記録を追加'}</h2><button class="mini-btn ghost" onclick="closeSheet()">閉じる</button></div>
+        <div class="grid-2">
+          <div>
+            <label>日付</label>
+            <input id="ride-date" type="date" value="${escapeHtml(ride.date)}">
+          </div>
+          <div>
+            <label>時間</label>
+            <div class="grid-2" style="grid-template-columns:1fr auto; gap:8px">
+              <input id="ride-time" type="time" value="${escapeHtml(ride.time)}" style="margin-bottom:0">
+              <button class="secondary mini-btn" onclick="document.getElementById('ride-time').value='${nowTime()}'; calcPreviewTotal()">現在時刻</button>
+            </div>
+          </div>
+        </div>
+        <label>顧客マスターから選ぶ</label>
+        <select onchange="fillFromCustomer(this)">
+          <option value="">選ばない</option>
+          ${state.customers.map(c => `<option value="${c.id}">#${escapeHtml(c.code)} ${escapeHtml(c.lastName || '')}</option>`).join('')}
+        </select>
+        <label>お名前</label>
+        <input id="ride-name" placeholder="例：田中" value="${escapeHtml(ride.name)}">
+        <div class="hint">姓のみがおすすめです</div>
+        <label>お迎え場所</label>
+        <input id="ride-pickup" placeholder="例：〇〇病院" value="${escapeHtml(ride.pickup)}">
+        <label>行き先</label>
+        <input id="ride-dropoff" placeholder="例：△△ホーム" value="${escapeHtml(ride.dropoff)}">
+        <div class="grid-2">
+          <div>
+            <label>メーター運賃</label>
+            <input id="ride-meter" type="number" inputmode="numeric" value="${num(ride.meter)}" oninput="calcPreviewTotal()">
+          </div>
+          <div>
+            <label>基本介助料</label>
+            <input id="ride-careBase" type="number" inputmode="numeric" value="${num(ride.careBase)}" oninput="calcPreviewTotal()">
+          </div>
+          <div>
+            <label>車イス料金</label>
+            <input id="ride-wheelFee" type="number" inputmode="numeric" value="${num(ride.wheelFee)}" oninput="calcPreviewTotal()">
+          </div>
+          <div>
+            <label>付添料</label>
+            <input id="ride-attend" type="number" inputmode="numeric" value="${num(ride.attend)}" oninput="calcPreviewTotal()">
+          </div>
+          <div>
+            <label>高速料金</label>
+            <input id="ride-highway" type="number" inputmode="numeric" value="${num(ride.highway)}" oninput="calcPreviewTotal()">
+          </div>
+        </div>
+        <label>割引</label>
+        <select id="ride-discountType" onchange="rideDiscountSelect(this.value)">
+          <option value="none" ${ride.discountType==='none' ? 'selected' : ''}>なし</option>
+          <option value="amount" ${ride.discountType==='amount' ? 'selected' : ''}>金額</option>
+          <option value="percent" ${ride.discountType==='percent' ? 'selected' : ''}>％</option>
+        </select>
+        <div id="discountValueWrap" class="${ride.discountType==='none' ? 'hidden' : ''}">
+          <input id="ride-discountValue" type="number" inputmode="numeric" value="${num(ride.discountValue)}" oninput="calcPreviewTotal()" placeholder="割引を入力">
+        </div>
+        <label>メモ</label>
+        <textarea id="ride-memo" placeholder="必要なメモだけ入力">${escapeHtml(ride.memo || '')}</textarea>
+        <div class="sum-box">合計 <strong id="previewTotal">${yen(calcTotal(ride))}</strong></div>
+        <button onclick="saveRide()">この内容で保存</button>
+        ${id ? '<div style="height:10px"></div><button class="danger" onclick="deleteRide(\'' + id + '\')">この記録を削除</button>' : ''}
+      `);
+      setTimeout(calcPreviewTotal, 30);
+    }
+
+    function calcPreviewTotal() {
+      const ride = {
+        meter: num(document.getElementById('ride-meter')?.value),
+        careBase: num(document.getElementById('ride-careBase')?.value),
+        wheelFee: num(document.getElementById('ride-wheelFee')?.value),
+        attend: num(document.getElementById('ride-attend')?.value),
+        highway: num(document.getElementById('ride-highway')?.value),
+        discountType: document.getElementById('ride-discountType')?.value || 'none',
+        discountValue: num(document.getElementById('ride-discountValue')?.value)
+      };
+      const total = calcTotal(ride);
+      const el = document.getElementById('previewTotal');
+      if (el) el.textContent = yen(total);
+    }
+
+    function saveRide() {
+      const ride = {
+        id: state.editingRideId || uid('ride'),
+        date: document.getElementById('ride-date').value || todayStr(),
+        time: document.getElementById('ride-time').value || nowTime(),
+        name: document.getElementById('ride-name').value.trim(),
+        pickup: document.getElementById('ride-pickup').value.trim(),
+        dropoff: document.getElementById('ride-dropoff').value.trim(),
+        meter: num(document.getElementById('ride-meter').value),
+        careBase: num(document.getElementById('ride-careBase').value),
+        wheelFee: num(document.getElementById('ride-wheelFee').value),
+        attend: num(document.getElementById('ride-attend').value),
+        highway: num(document.getElementById('ride-highway').value),
+        discountType: document.getElementById('ride-discountType').value,
+        discountValue: num(document.getElementById('ride-discountValue')?.value),
+        memo: document.getElementById('ride-memo').value.trim()
+      };
+      ride.total = calcTotal(ride);
+      const idx = state.rides.findIndex(r => r.id === ride.id);
+      if (idx >= 0) state.rides[idx] = ride; else state.rides.push(ride);
+      saveRides();
+      closeSheet();
+      renderAll();
+    }
+
+    function deleteRide(id) {
+      if (!confirm('この記録を削除しますか？')) return;
+      state.rides = state.rides.filter(r => r.id !== id);
+      saveRides();
+      closeSheet();
+      renderAll();
+    }
+
+    function nextCustomerCode() {
+      const nums = state.customers.map(c => num(c.code));
+      return String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3, '0');
+    }
+
+    function openCustomerForm(id='') {
+      const c = state.customers.find(x => x.id === id) || { id:'', code: nextCustomerCode(), lastName:'', memo:'', frequentPickup:'', frequentDropoff:'' };
+      state.editingCustomerId = id || null;
+      openSheet(`
+        <div class="section-title"><h2>${id ? '顧客を編集' : '顧客を追加'}</h2><button class="mini-btn ghost" onclick="closeSheet()">閉じる</button></div>
+        <label>顧客コード</label>
+        <input id="cust-code" value="${escapeHtml(c.code)}">
+        <label>姓</label>
+        <input id="cust-lastName" value="${escapeHtml(c.lastName)}" placeholder="例：田中">
+        <div class="hint">姓のみ登録がおすすめです</div>
+        <label>特徴メモ</label>
+        <input id="cust-memo" value="${escapeHtml(c.memo)}" placeholder="例：車イス利用あり">
+        <label>よく使うお迎え場所</label>
+        <input id="cust-pickup" value="${escapeHtml(c.frequentPickup)}">
+        <label>よく使う行き先</label>
+        <input id="cust-dropoff" value="${escapeHtml(c.frequentDropoff)}">
+        <button onclick="saveCustomer()">保存</button>
+        ${id ? '<div style="height:10px"></div><button class="danger" onclick="deleteCustomer(\'' + id + '\')">この顧客を削除</button>' : ''}
+      `);
+    }
+
+    function saveCustomer() {
+      const c = {
+        id: state.editingCustomerId || uid('cust'),
+        code: document.getElementById('cust-code').value.trim() || nextCustomerCode(),
+        lastName: document.getElementById('cust-lastName').value.trim(),
+        memo: document.getElementById('cust-memo').value.trim(),
+        frequentPickup: document.getElementById('cust-pickup').value.trim(),
+        frequentDropoff: document.getElementById('cust-dropoff').value.trim()
+      };
+      const idx = state.customers.findIndex(x => x.id === c.id);
+      if (idx >= 0) state.customers[idx] = c; else state.customers.push(c);
+      saveCustomers();
+      closeSheet();
+      renderCustomers();
+    }
+
+    function deleteCustomer(id) {
+      if (!confirm('この顧客を削除しますか？')) return;
+      state.customers = state.customers.filter(c => c.id !== id);
+      saveCustomers();
+      closeSheet();
+      renderCustomers();
+    }
+
+    function changeNameMode(v) {
+      state.config.nameMode = v;
+      saveConfig();
+      renderAll();
+    }
+    function toggleAutoDelete(v) {
+      state.config.autoDeleteYear = v;
+      saveConfig();
+    }
+
+    function exportCsv() {
+      if (!state.rides.length) { alert('書き出すデータがありません。'); return; }
+      const ok = confirm('個人情報が入っていないか確認してから書き出してください。CSVを書き出しますか？');
+      if (!ok) return;
+      const header = ['日付','時間','名前','お迎え場所','行き先','メーター運賃','基本介助料','車イス料金','付添料','高速料金','割引種別','割引値','合計','メモ'];
+      const rows = state.rides.map(r => [r.date,r.time,r.name,r.pickup,r.dropoff,r.meter,r.careBase,r.wheelFee,r.attend,r.highway,r.discountType,r.discountValue,r.total,r.memo]);
+      const csv = [header, ...rows].map(row => row.map(v => '"' + String(v ?? '').replaceAll('"', '""') + '"').join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'taxi_records_' + todayStr() + '.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function exportBackup() {
+      const data = {
+        app: '介護タクシー運行記録アプリ',
+        version: 3,
+        exportedAt: new Date().toISOString(),
+        config: {
+          autoDeleteYear: !!state.config.autoDeleteYear,
+          nameMode: state.config.nameMode || 'lastname'
+        },
+        rides: state.rides.map(normalizeRide),
+        customers: state.customers.map(normalizeCustomer)
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'taxi_backup_' + todayStr() + '.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function restoreBackupFile(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const raw = JSON.parse(reader.result);
+          if (!raw || (!Array.isArray(raw.rides) && !Array.isArray(raw.customers))) {
+            throw new Error('形式が違います');
+          }
+          const rideCount = Array.isArray(raw.rides) ? raw.rides.length : 0;
+          const customerCount = Array.isArray(raw.customers) ? raw.customers.length : 0;
+          const ok = confirm('バックアップを復元しますか？\n今あるデータは上書きされます。\n\n記録: ' + rideCount + '件\n顧客: ' + customerCount + '件');
+          if (!ok) {
+            input.value = '';
+            return;
+          }
+          const safeConfig = raw.config || {};
+          state.rides = (raw.rides || []).map(normalizeRide);
+          state.customers = (raw.customers || []).map(normalizeCustomer);
+          state.config = {
+            ...state.config,
+            autoDeleteYear: typeof safeConfig.autoDeleteYear === 'boolean' ? safeConfig.autoDeleteYear : state.config.autoDeleteYear,
+            nameMode: safeConfig.nameMode || state.config.nameMode || 'lastname'
+          };
+          saveRides();
+          saveCustomers();
+          saveConfig();
+          renderAll();
+          alert('復元が完了しました。');
+        } catch (e) {
+          alert('バックアップの読み込みに失敗しました。\n別のファイルか、正しいJSONファイルか確認してください。');
+        }
+        input.value = '';
+      };
+      reader.readAsText(file, 'utf-8');
+    }
+
+    function clearAllData() {
+      if (!confirm('全データを削除しますか？この操作は元に戻せません。')) return;
+      localStorage.removeItem(storageKeys.rides);
+      localStorage.removeItem(storageKeys.customers);
+      state.rides = [];
+      state.customers = [];
+      renderAll();
+    }
+
+    function showLockScreen() {
+      document.getElementById('appRoot').classList.add('hidden');
+      document.getElementById('lockScreen').classList.remove('hidden');
+      state.lockPin = '';
+      renderPinDots('lockDots', state.lockPin.length);
+      document.getElementById('lockError').classList.add('hidden');
+    }
+    function showApp() {
+      document.getElementById('privacyScreen').classList.add('hidden');
+      document.getElementById('passcodeSetupScreen').classList.add('hidden');
+      document.getElementById('lockScreen').classList.add('hidden');
+      document.getElementById('appRoot').classList.remove('hidden');
+      renderAll();
+    }
+    function renderPinDots(id, count) {
+      document.getElementById(id).innerHTML = Array.from({length:4}).map((_,i) => `<div class="pin-dot ${i < count ? 'filled' : ''}"></div>`).join('');
+    }
+    function buildKeypad(containerId, onPressName) {
+      const wrap = document.getElementById(containerId);
+      const nums = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
+      wrap.innerHTML = nums.map(n => n ? `<button onclick="${onPressName}('${n}')">${n}</button>` : '<div></div>').join('');
+    }
+    function setupPress(key) {
+      if (key === '⌫') {
+        if (!state.setupConfirm) state.setupPin = state.setupPin.slice(0,-1); else state.setupConfirm = state.setupConfirm.slice(0,-1);
       } else {
-        if (setupPasscodeInput === setupPasscodeFirst) {
-          // 保存（ハッシュ化）
-          STORE.rawSet('passcode-hash', hashCode(setupPasscodeFirst));
-          showToast('パスコードを設定しました');
-          renderMain();
+        if (!state.setupConfirm && state.setupPin.length < 4) state.setupPin += key;
+        else if (state.setupPin.length === 4 && state.setupConfirm.length < 4) state.setupConfirm += key;
+      }
+      const count = !state.setupConfirm ? state.setupPin.length : state.setupConfirm.length;
+      renderPinDots('setupDots', count);
+      if (state.setupPin.length === 4 && !state.setupConfirm) {
+        document.getElementById('setupTitle').textContent = 'もう一度入力してください';
+        document.getElementById('setupText').textContent = '確認のため同じ4桁を入力します。';
+        state.setupConfirm = '';
+        renderPinDots('setupDots', 0);
+      } else if (state.setupPin.length === 4 && state.setupConfirm.length === 4) {
+        if (state.setupPin !== state.setupConfirm) {
+          alert('パスコードが一致しません。もう一度やり直してください。');
+          state.setupPin = ''; state.setupConfirm = '';
+          document.getElementById('setupTitle').textContent = '4桁のパスコードを決める';
+          document.getElementById('setupText').textContent = 'あとでアプリを開く時に使います。';
+          renderPinDots('setupDots', 0);
         } else {
-          // 不一致
-          document.querySelectorAll('.dot').forEach(d => d.classList.add('error'));
-          setTimeout(() => {
-            setupPasscodeStep = 1;
-            setupPasscodeFirst = '';
-            setupPasscodeInput = '';
-            drawSetupPasscode();
-            showToast('一致しません。もう一度');
-          }, 600);
+          state.config.passcode = state.setupPin;
+          saveConfig();
+          showApp();
         }
       }
-    }, 200);
-  }
-}
-
-function hashCode(str) {
-  // 簡易ハッシュ
-  let h = 5381;
-  for (let i = 0; i < str.length; i++) {
-    h = ((h << 5) + h) + str.charCodeAt(i);
-  }
-  return String(h ^ 0x12345678);
-}
-
-// ====== ロック画面 ======
-function renderLock() {
-  lockState.input = '';
-  drawLock();
-}
-
-function drawLock() {
-  document.getElementById('app').innerHTML = `
-    <div class="lock">
-      <div class="lock-icon">🔒</div>
-      <div class="lock-title">パスコードを入力</div>
-      <div class="lock-sub">記録データを保護しています</div>
-      <div class="dots">
-        ${[0,1,2,3].map(i => `<div class="dot ${i < lockState.input.length ? 'filled' : ''}"></div>`).join('')}
-      </div>
-      <div class="keypad">
-        ${[1,2,3,4,5,6,7,8,9].map(n => `<button class="kbtn" onclick="lockKey('${n}')">${n}</button>`).join('')}
-        <div class="kbtn empty"></div>
-        <button class="kbtn" onclick="lockKey('0')">0</button>
-        <button class="kbtn text" onclick="lockKey('del')">削除</button>
-      </div>
-    </div>
-  `;
-}
-
-function lockKey(k) {
-  if (k === 'del') {
-    lockState.input = lockState.input.slice(0, -1);
-  } else if (lockState.input.length < 4) {
-    lockState.input += k;
-  }
-  drawLock();
-  if (lockState.input.length === 4) {
-    setTimeout(() => {
-      const h = hashCode(lockState.input);
-      if (h === STORE.raw('passcode-hash')) {
-        lockState.lastActivity = Date.now();
-        renderMain();
-      } else {
-        document.querySelectorAll('.dot').forEach(d => d.classList.add('error'));
-        setTimeout(() => {
-          lockState.input = '';
-          drawLock();
-        }, 600);
+    }
+    function lockPress(key) {
+      if (key === '⌫') state.lockPin = state.lockPin.slice(0,-1);
+      else if (state.lockPin.length < 4) state.lockPin += key;
+      renderPinDots('lockDots', state.lockPin.length);
+      if (state.lockPin.length === 4) {
+        if (state.lockPin === state.config.passcode) {
+          state.lockPin = '';
+          showApp();
+        } else {
+          document.getElementById('lockError').classList.remove('hidden');
+          state.lockPin = '';
+          setTimeout(() => renderPinDots('lockDots', 0), 100);
+        }
       }
-    }, 150);
-  }
-}
-
-// ====== メイン画面 ======
-function renderMain() {
-  let content = '';
-  if (currentTab === 'today') content = renderToday();
-  else if (currentTab === 'history') content = renderHistory();
-  else if (currentTab === 'stats') content = renderStats();
-  else if (currentTab === 'settings') content = renderSettings();
-
-  document.getElementById('app').innerHTML = `
-    ${renderHeader()}
-    <div class="main">
-      <div class="main-inner">${content}</div>
-    </div>
-    ${currentTab !== 'settings' && currentTab === 'today' ? '<button class="fab" onclick="openRideForm()">＋</button>' : ''}
-    ${renderTabbar()}
-  `;
-}
-
-function renderHeader() {
-  const titles = {
-    today: { t: '今日の運行', s: formatDate(new Date(), true) },
-    history: { t: '履歴', s: '過去の運行記録' },
-    stats: { t: '集計', s: '月別売上' },
-    settings: { t: '設定', s: '' }
-  };
-  const h = titles[currentTab];
-  return `
-    <div class="header">
-      <div>
-        <div class="header-title">${h.t}</div>
-        ${h.s ? `<div class="header-sub">${h.s}</div>` : ''}
-      </div>
-      <button class="header-btn" onclick="lockNow()">
-        <span class="header-btn-icon">🔒</span>
-      </button>
-    </div>
-  `;
-}
-
-function renderTabbar() {
-  const tabs = [
-    { id: 'today', icon: '🚖', label: '今日' },
-    { id: 'history', icon: '📅', label: '履歴' },
-    { id: 'stats', icon: '📊', label: '集計' },
-    { id: 'settings', icon: '⚙️', label: '設定' }
-  ];
-  return `
-    <div class="tabbar">
-      ${tabs.map(t => `
-        <button class="tab ${currentTab === t.id ? 'active' : ''}" onclick="switchTab('${t.id}')">
-          <span class="tab-icon">${t.icon}</span>
-          <span>${t.label}</span>
-        </button>
-      `).join('')}
-    </div>
-  `;
-}
-
-function switchTab(id) {
-  currentTab = id;
-  renderMain();
-}
-
-// ====== Today タブ ======
-function renderToday() {
-  const today = todayStr();
-  const todayRides = state.rides.filter(r => r.date === today).sort((a,b) => a.time.localeCompare(b.time));
-  const totalAmount = todayRides.reduce((s, r) => s + r.total, 0);
-  const totalMeter = todayRides.reduce((s, r) => s + (r.meter || 0), 0);
-  const totalCare = todayRides.reduce((s, r) => s + (r.careBase || 0) + (r.attend || 0) + (r.wheel ? 500 : 0), 0);
-  const modeLabel = {
-    full: 'フル氏名表示', last: '姓のみ表示',
-    initial: 'イニシャル表示', code: '顧客コード表示'
-  }[state.settings.nameDisplayMode];
-
-  return `
-    <div class="privacy-banner">🛡 プライバシーモード：${modeLabel}</div>
-    <div class="summary">
-      <div class="summary-label">本日の累計</div>
-      <div class="summary-amount">¥${totalAmount.toLocaleString()}</div>
-      <div class="summary-detail">${todayRides.length}件 / メーター ¥${totalMeter.toLocaleString()} + 介助 ¥${totalCare.toLocaleString()}</div>
-    </div>
-    ${todayRides.length === 0 ? `
-      <div class="empty">
-        <div class="empty-icon">🚖</div>
-        <div>今日の運行記録はまだありません</div>
-        <div style="margin-top:6px; font-size:11px;">右下の＋ボタンから追加</div>
-      </div>
-    ` : todayRides.map(r => renderRideCard(r)).join('')}
-  `;
-}
-
-function renderRideCard(r) {
-  const name = maskName(r.name);
-  const pickup = maskPlace(r.pickup, 'pickup');
-  const dropoff = maskPlace(r.dropoff, 'dropoff');
-  const tags = [];
-  if (r.wheel) tags.push('<span class="tag wheel">車イス</span>');
-  if (r.attend > 0) tags.push('<span class="tag">付添あり</span>');
-  if (r.discount && r.discount.type !== 'none') {
-    if (r.discount.type === 'percent') tags.push(`<span class="tag discount">割引${r.discount.value}%</span>`);
-    else tags.push(`<span class="tag discount">割引-¥${r.discount.value}</span>`);
-  }
-  if (r.ticket) tags.push('<span class="tag ticket">タクチケ</span>');
-  
-  return `
-    <div class="ride-card" onclick="showRideDetail('${r.id}')">
-      <div class="ride-top">
-        <span class="ride-time">${r.time}</span>
-        <span class="ride-amount">¥${r.total.toLocaleString()}</span>
-      </div>
-      <div class="ride-name">${name}</div>
-      <div class="ride-route">📍 ${pickup} → ${dropoff}</div>
-      ${tags.length ? `<div class="ride-tags">${tags.join('')}</div>` : ''}
-    </div>
-  `;
-}
-
-// ====== マスキング ======
-function maskName(name) {
-  if (!name) return '名前未入力';
-  const mode = state.settings.nameDisplayMode;
-  if (mode === 'full') return name + ' 様';
-  if (mode === 'last') {
-    // 「田中 太郎」→「田中」, 「田中太郎」→「田中」(先頭2文字)
-    if (name.includes(' ') || name.includes('　')) return name.split(/[ 　]/)[0] + ' 様';
-    return name.substring(0, 2) + ' 様';
-  }
-  if (mode === 'initial') {
-    // 「田中 太郎」→「T.T 様」: ローマ字変換は困難なので頭文字をそのまま伏字
-    const parts = name.split(/[ 　]/);
-    if (parts.length >= 2) return parts[0].charAt(0) + '.' + parts[1].charAt(0) + ' 様';
-    return name.charAt(0) + '. 様';
-  }
-  if (mode === 'code') {
-    // 顧客マスターからコードを引く
-    const cust = state.customers.find(c => c.lastName && name.startsWith(c.lastName));
-    if (cust) return `#${cust.code} 様`;
-    return '#--- 様';
-  }
-  return name;
-}
-
-function maskPlace(p, type) {
-  if (!p) return '-';
-  if (state.settings.placeDisplayMode === 'full') return p;
-  // 略称：先頭6文字
-  if (p.length > 6) return p.substring(0, 6) + '…';
-  return p;
-}
-
-// ====== 詳細表示 ======
-function showRideDetail(id) {
-  const r = state.rides.find(x => x.id === id);
-  if (!r) return;
-  
-  const html = `
-    <div class="modal" onclick="closeModal(event)">
-      <div class="modal-sheet" onclick="event.stopPropagation()">
-        <div class="modal-header">
-          <button class="header-btn" onclick="closeModal()">閉じる</button>
-          <div class="modal-title">運行詳細</div>
-          <button class="header-btn" onclick="editRide('${id}')">編集</button>
-        </div>
-        <div class="modal-body">
-          <div class="section detail-grid">
-            <div class="row"><span class="row-label">日付</span><span class="row-value-text">${r.date}</span></div>
-            <div class="row"><span class="row-label">時刻</span><span class="row-value-text">${r.time}</span></div>
-            <div class="row"><span class="row-label">お客様名</span><span class="row-value-text">${r.name || '-'} 様</span></div>
-            <div class="row"><span class="row-label">お迎え場所</span><span class="row-value-text">${r.pickup || '-'}</span></div>
-            <div class="row"><span class="row-label">行き先</span><span class="row-value-text">${r.dropoff || '-'}</span></div>
-            <div class="row"><span class="row-label">メーター運賃</span><span class="row-value-text">¥${(r.meter||0).toLocaleString()}</span></div>
-            <div class="row"><span class="row-label">基本介助料</span><span class="row-value-text">¥${(r.careBase||0).toLocaleString()}</span></div>
-            <div class="row"><span class="row-label">車イス</span><span class="row-value-text">${r.wheel ? '使用（+¥500）' : '未使用'}</span></div>
-            <div class="row"><span class="row-label">付添料</span><span class="row-value-text">¥${(r.attend||0).toLocaleString()}</span></div>
-            <div class="row"><span class="row-label">割引</span><span class="row-value-text">${formatDiscount(r.discount)}</span></div>
-            <div class="row"><span class="row-label">タクチケ</span><span class="row-value-text">${r.ticket || '-'}</span></div>
-          </div>
-          <div class="total-row">
-            <div class="total-label">合計</div>
-            <div class="total-amount">¥${r.total.toLocaleString()}</div>
-          </div>
-          <button class="btn-primary btn-danger" onclick="deleteRide('${id}')">この記録を削除</button>
-        </div>
-      </div>
-    </div>
-  `;
-  document.body.insertAdjacentHTML('beforeend', `<div id="overlay">${html}</div>`);
-}
-
-function formatDiscount(d) {
-  if (!d || d.type === 'none' || !d.value) return 'なし';
-  if (d.type === 'percent') return `${d.value}%引き`;
-  return `-¥${d.value.toLocaleString()}`;
-}
-
-function deleteRide(id) {
-  if (!confirm('この記録を削除しますか？')) return;
-  state.rides = state.rides.filter(r => r.id !== id);
-  saveRides();
-  closeModal();
-  renderMain();
-  showToast('削除しました');
-}
-
-// ====== 新規/編集フォーム ======
-let formData = null;
-
-function openRideForm(editId) {
-  if (editId) {
-    const r = state.rides.find(x => x.id === editId);
-    formData = JSON.parse(JSON.stringify(r));
-    formData._editId = editId;
-  } else {
-    const now = new Date();
-    formData = {
-      id: 'r_' + Date.now() + '_' + Math.random().toString(36).slice(2,8),
-      date: todayStr(),
-      time: `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`,
-      name: '', pickup: '', dropoff: '',
-      meter: 0, careBase: 0, wheel: false, attend: 0,
-      discount: { type: 'none', value: 0 },
-      ticket: '',
-      total: 0,
-      createdAt: Date.now()
-    };
-  }
-  drawRideForm();
-}
-
-function editRide(id) {
-  closeModal();
-  openRideForm(id);
-}
-
-function drawRideForm() {
-  // 候補生成
-  const nameHistory = uniqueBy(state.rides.map(r => r.name).filter(Boolean), x => x).slice(-6).reverse();
-  const pickupHistory = uniqueBy(state.rides.map(r => r.pickup).filter(Boolean), x => x).slice(-6).reverse();
-  const dropoffHistory = uniqueBy(state.rides.map(r => r.dropoff).filter(Boolean), x => x).slice(-6).reverse();
-  
-  const total = calcTotal(formData);
-  formData.total = total;
-
-  const html = `
-    <div class="modal" onclick="closeModal(event)">
-      <div class="modal-sheet" onclick="event.stopPropagation()">
-        <div class="modal-header">
-          <button class="header-btn" onclick="closeModal()">キャンセル</button>
-          <div class="modal-title">${formData._editId ? '記録を編集' : '新規記録'}</div>
-          <button class="header-btn" onclick="saveRide()" style="font-weight:600;">保存</button>
-        </div>
-        <div class="modal-body">
-          <div class="section">
-            <div class="input-row">
-              <div class="input-label">日付</div>
-              <input class="input-field" type="date" value="${formData.date}" onchange="formData.date=this.value">
-            </div>
-            <div class="input-row">
-              <div class="input-label">時刻</div>
-              <div class="time-row">
-                <input class="time-box" type="time" value="${formData.time}" onchange="formData.time=this.value">
-                <button class="time-now" onclick="setNowTime()">現在時刻</button>
-              </div>
-            </div>
-            <div class="input-row">
-              <div class="input-label">お客様名（姓のみ推奨）</div>
-              <input class="input-field" type="text" value="${escHtml(formData.name)}" placeholder="例：田中" oninput="formData.name=this.value">
-              ${nameHistory.length ? `<div class="chips">${nameHistory.map(n => `<button class="chip" onclick="setFormField('name','${escHtml(n)}')">${escHtml(n)}</button>`).join('')}</div>` : ''}
-              ${state.customers.length ? `<div class="chips" style="margin-top:8px;">${state.customers.map(c => `<button class="chip" style="background:#fff4e0;color:#d97706;" onclick="useCustomer('${c.id}')">📒 ${c.lastName} (#${c.code})</button>`).join('')}</div>` : ''}
-            </div>
-          </div>
-
-          <div class="section">
-            <div class="input-row">
-              <div class="input-label">お迎え場所</div>
-              <input class="input-field" type="text" value="${escHtml(formData.pickup)}" placeholder="例：〇〇ホーム" oninput="formData.pickup=this.value">
-              ${pickupHistory.length ? `<div class="chips">${pickupHistory.map(p => `<button class="chip" onclick="setFormField('pickup','${escHtml(p)}')">${escHtml(p)}</button>`).join('')}</div>` : ''}
-            </div>
-            <div class="input-row">
-              <div class="input-label">行き先</div>
-              <input class="input-field" type="text" value="${escHtml(formData.dropoff)}" placeholder="例：△△病院" oninput="formData.dropoff=this.value">
-              ${dropoffHistory.length ? `<div class="chips">${dropoffHistory.map(p => `<button class="chip" onclick="setFormField('dropoff','${escHtml(p)}')">${escHtml(p)}</button>`).join('')}</div>` : ''}
-            </div>
-          </div>
-
-          <div class="section">
-            <div class="input-row">
-              <div class="input-label">メーター運賃</div>
-              <input class="input-field input-money" type="number" inputmode="numeric" value="${formData.meter || ''}" placeholder="0" oninput="formData.meter=parseInt(this.value)||0; updateFormTotal();">
-            </div>
-            <div class="input-row">
-              <div class="input-label">基本介助料</div>
-              <input class="input-field input-money" type="number" inputmode="numeric" value="${formData.careBase || ''}" placeholder="0" oninput="formData.careBase=parseInt(this.value)||0; updateFormTotal();">
-            </div>
-            <div class="input-row">
-              <div class="input-label">車イス</div>
-              <div class="check-row" onclick="toggleWheel()">
-                <div class="check ${formData.wheel ? 'on' : ''}">${formData.wheel ? '✓' : ''}</div>
-                <span>使用する（+¥500）</span>
-              </div>
-            </div>
-            <div class="input-row">
-              <div class="input-label">付添料</div>
-              <input class="input-field input-money" type="number" inputmode="numeric" value="${formData.attend || ''}" placeholder="0" oninput="formData.attend=parseInt(this.value)||0; updateFormTotal();">
-            </div>
-          </div>
-
-          <div class="section">
-            <div class="input-row">
-              <div class="input-label">割引</div>
-              <div class="seg">
-                <div class="seg-item ${formData.discount.type==='none'?'active':''}" onclick="setDiscountType('none')">なし</div>
-                <div class="seg-item ${formData.discount.type==='amount'?'active':''}" onclick="setDiscountType('amount')">金額</div>
-                <div class="seg-item ${formData.discount.type==='percent'?'active':''}" onclick="setDiscountType('percent')">％</div>
-              </div>
-              ${formData.discount.type !== 'none' ? `
-                <input class="input-field input-money" type="number" inputmode="numeric" value="${formData.discount.value || ''}" placeholder="${formData.discount.type==='percent'?'例: 10':'例: 200'}" oninput="formData.discount.value=parseInt(this.value)||0; updateFormTotal();">
-              ` : ''}
-            </div>
-            <div class="input-row">
-              <div class="input-label">タクチケ（メモ）</div>
-              <input class="input-field" type="text" value="${escHtml(formData.ticket)}" placeholder="券番号や金額など" oninput="formData.ticket=this.value">
-            </div>
-          </div>
-
-          <div class="total-row">
-            <div class="total-label">合計（自動計算）</div>
-            <div class="total-amount" id="totalDisplay">¥${total.toLocaleString()}</div>
-          </div>
-          <button class="btn-primary" onclick="saveRide()">この内容で保存</button>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  document.body.insertAdjacentHTML('beforeend', `<div id="overlay">${html}</div>`);
-}
-
-function setFormField(k, v) { formData[k] = v; drawRideForm(); refreshOverlay(); }
-function setDiscountType(t) { formData.discount.type = t; if (t === 'none') formData.discount.value = 0; refreshOverlay(); }
-function toggleWheel() { formData.wheel = !formData.wheel; refreshOverlay(); }
-function setNowTime() {
-  const now = new Date();
-  formData.time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-  refreshOverlay();
-}
-function refreshOverlay() {
-  closeModal();
-  drawRideForm();
-}
-function updateFormTotal() {
-  const t = calcTotal(formData);
-  formData.total = t;
-  const el = document.getElementById('totalDisplay');
-  if (el) el.textContent = '¥' + t.toLocaleString();
-}
-
-function useCustomer(custId) {
-  const c = state.customers.find(x => x.id === custId);
-  if (!c) return;
-  formData.customerId = c.id;
-  formData.name = c.lastName;
-  if (!formData.pickup && c.frequentPickup) formData.pickup = c.frequentPickup;
-  if (!formData.dropoff && c.frequentDropoff) formData.dropoff = c.frequentDropoff;
-  refreshOverlay();
-}
-
-function calcTotal(f) {
-  let base = (f.meter||0) + (f.careBase||0) + (f.attend||0) + (f.wheel ? 500 : 0);
-  if (f.discount && f.discount.type === 'amount') base -= (f.discount.value || 0);
-  else if (f.discount && f.discount.type === 'percent') base -= Math.floor(base * (f.discount.value || 0) / 100);
-  return Math.max(0, base);
-}
-
-function saveRide() {
-  if (!formData.time) { showToast('時刻を入力してください'); return; }
-  formData.total = calcTotal(formData);
-  
-  if (formData._editId) {
-    const idx = state.rides.findIndex(r => r.id === formData._editId);
-    delete formData._editId;
-    if (idx >= 0) state.rides[idx] = formData;
-  } else {
-    state.rides.push(formData);
-  }
-  saveRides();
-  closeModal();
-  renderMain();
-  showToast('保存しました');
-}
-
-// ====== 履歴タブ ======
-function renderHistory() {
-  const today = todayStr();
-  const past = state.rides.filter(r => r.date !== today).sort((a,b) => (b.date+b.time).localeCompare(a.date+a.time));
-  
-  if (past.length === 0) {
-    return '<div class="empty"><div class="empty-icon">📅</div>過去の記録はまだありません</div>';
-  }
-  
-  // 日付ごとにグループ化
-  const byDate = {};
-  past.forEach(r => { if (!byDate[r.date]) byDate[r.date] = []; byDate[r.date].push(r); });
-  const dates = Object.keys(byDate).sort().reverse();
-  
-  return dates.map(d => {
-    const dayTotal = byDate[d].reduce((s,r) => s + r.total, 0);
-    return `
-      <div class="group-title">${d} ・ ${byDate[d].length}件 ・ ¥${dayTotal.toLocaleString()}</div>
-      ${byDate[d].sort((a,b) => a.time.localeCompare(b.time)).map(r => renderRideCard(r)).join('')}
-    `;
-  }).join('');
-}
-
-// ====== 集計タブ ======
-let statsMonth = (() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); })();
-
-function renderStats() {
-  const [y, m] = statsMonth.split('-');
-  const monthLabel = `${y}年${parseInt(m)}月`;
-  const inMonth = state.rides.filter(r => r.date.startsWith(statsMonth));
-  const total = inMonth.reduce((s,r) => s + r.total, 0);
-  const count = inMonth.length;
-  const meter = inMonth.reduce((s,r) => s + (r.meter||0), 0);
-  const care = inMonth.reduce((s,r) => s + (r.careBase||0) + (r.attend||0) + (r.wheel ? 500 : 0), 0);
-  
-  // 日別
-  const byDate = {};
-  inMonth.forEach(r => { if (!byDate[r.date]) byDate[r.date] = []; byDate[r.date].push(r); });
-  const days = Object.keys(byDate).sort().reverse();
-  
-  return `
-    <div class="month-nav">
-      <button class="month-nav-btn" onclick="changeMonth(-1)">＜</button>
-      <span class="month-title">${monthLabel}</span>
-      <button class="month-nav-btn" onclick="changeMonth(1)">＞</button>
-    </div>
-    <div class="stat-grid">
-      <div class="stat-box hl">
-        <div class="stat-label">今月の売上合計</div>
-        <div class="stat-value">¥${total.toLocaleString()}</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">運行件数</div>
-        <div class="stat-value">${count}件</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">メーター運賃</div>
-        <div class="stat-value">¥${meter.toLocaleString()}</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-label">介助料合計</div>
-        <div class="stat-value">¥${care.toLocaleString()}</div>
-      </div>
-    </div>
-    ${days.length ? `
-      <div class="group-title">日別の売上</div>
-      <div class="daily-list">
-        ${days.map(d => {
-          const total = byDate[d].reduce((s,r) => s + r.total, 0);
-          return `<div class="daily-row">
-            <div><span class="daily-date">${formatDateShort(d)}</span><span class="daily-count">${byDate[d].length}件</span></div>
-            <div class="daily-amount">¥${total.toLocaleString()}</div>
-          </div>`;
-        }).join('')}
-      </div>
-    ` : '<div class="empty">この月の記録はありません</div>'}
-    <button class="btn-primary" style="margin-top:14px;" onclick="exportCSVConfirm()">📤 CSVをエクスポート</button>
-  `;
-}
-
-function changeMonth(delta) {
-  const [y, m] = statsMonth.split('-').map(Number);
-  const d = new Date(y, m - 1 + delta, 1);
-  statsMonth = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-  renderMain();
-}
-
-// ====== 設定タブ ======
-function renderSettings() {
-  const s = state.settings;
-  const nameMap = { full:'フル表示', last:'姓のみ', initial:'イニシャル', code:'顧客コード' };
-  const placeMap = { full:'フル表示', short:'略称' };
-  const lockMap = { 1:'1分後', 5:'5分後', 30:'30秒後', 0:'なし' };
-  const autoDelMap = { 0:'削除しない', 12:'1年経過後' };
-  
-  return `
-    <div class="group-title">🔒 セキュリティ</div>
-    <div class="group">
-      <div class="row" onclick="changePasscode()">
-        <div class="row-left">
-          <div class="row-icon" style="background:#ff3b30;">🔑</div>
-          <span>パスコードを変更</span>
-        </div>
-        <span class="row-value">＞</span>
-      </div>
-      <div class="row" onclick="cycleSetting('autoLockMinutes', [1,5,30,0])">
-        <div class="row-left">
-          <div class="row-icon" style="background:#007aff;">⏱</div>
-          <span>自動ロック</span>
-        </div>
-        <span class="row-value">${lockMap[s.autoLockMinutes]} ＞</span>
-      </div>
-      <div class="row" onclick="toggleSetting('screenshotWarn')">
-        <div class="row-left">
-          <div class="row-icon" style="background:#34c759;">📸</div>
-          <span>スクショ警告</span>
-        </div>
-        <div class="toggle ${s.screenshotWarn ? '' : 'off'}"></div>
-      </div>
-    </div>
-
-    <div class="group-title">👤 表示プライバシー</div>
-    <div class="group">
-      <div class="row" onclick="openNameModePicker()">
-        <div class="row-left">
-          <div class="row-icon" style="background:#5856d6;">👤</div>
-          <span>氏名の表示方法</span>
-        </div>
-        <span class="row-value">${nameMap[s.nameDisplayMode]} ＞</span>
-      </div>
-      <div class="row" onclick="cycleSetting('placeDisplayMode', ['short','full'])">
-        <div class="row-left">
-          <div class="row-icon" style="background:#ff9500;">📍</div>
-          <span>場所の表示方法</span>
-        </div>
-        <span class="row-value">${placeMap[s.placeDisplayMode]} ＞</span>
-      </div>
-      <div class="row" onclick="toggleSetting('privacyMaskMode')">
-        <div class="row-left">
-          <div class="row-icon" style="background:#af52de;">👁</div>
-          <span>覗き見防止（背景時）</span>
-        </div>
-        <div class="toggle ${s.privacyMaskMode ? '' : 'off'}"></div>
-      </div>
-    </div>
-
-    <div class="group-title">📒 顧客マスター</div>
-    <div class="group">
-      <div class="row" onclick="openCustomerList()">
-        <div class="row-left">
-          <div class="row-icon" style="background:#34c759;">📒</div>
-          <span>顧客一覧</span>
-        </div>
-        <span class="row-value">${state.customers.length}件 ＞</span>
-      </div>
-    </div>
-
-    <div class="group-title">💾 データ管理</div>
-    <div class="group">
-      <div class="row" onclick="cycleSetting('autoDeleteMonths', [0,12])">
-        <div class="row-left">
-          <div class="row-icon" style="background:#ff9500;">🗓</div>
-          <span>古いデータの自動削除</span>
-        </div>
-        <span class="row-value">${autoDelMap[s.autoDeleteMonths]} ＞</span>
-      </div>
-      <div class="row" onclick="exportCSVConfirm()">
-        <div class="row-left">
-          <div class="row-icon" style="background:#34c759;">📤</div>
-          <span>CSVエクスポート</span>
-        </div>
-        <span class="row-value">＞</span>
-      </div>
-      <div class="row danger" onclick="deleteAllData()">
-        <div class="row-left">
-          <div class="row-icon" style="background:#ff3b30;">🗑</div>
-          <span>全データを削除</span>
-        </div>
-        <span class="row-value">＞</span>
-      </div>
-    </div>
-    
-    <div style="text-align:center; color:#aaa; font-size:11px; margin-top:20px; padding-bottom:20px;">
-      運行記録アプリ v1.0<br>
-      データは全てこのiPhone内に暗号化保存されます
-    </div>
-  `;
-}
-
-function toggleSetting(k) {
-  state.settings[k] = !state.settings[k];
-  saveSettings();
-  renderMain();
-}
-function cycleSetting(k, values) {
-  const cur = values.indexOf(state.settings[k]);
-  state.settings[k] = values[(cur + 1) % values.length];
-  saveSettings();
-  renderMain();
-}
-
-// ====== 氏名表示モードピッカー ======
-function openNameModePicker() {
-  const opts = [
-    { id: 'full', label: 'フル表示', ex: '例：田中 太郎 様' },
-    { id: 'last', label: '姓のみ', ex: '例：田中 様' },
-    { id: 'initial', label: 'イニシャル', ex: '例：田.太 様' },
-    { id: 'code', label: '顧客コード（最高保護）', ex: '例：#001 様' }
-  ];
-  const html = `
-    <div class="modal" onclick="closeModal(event)">
-      <div class="modal-sheet" onclick="event.stopPropagation()">
-        <div class="modal-header">
-          <button class="header-btn" onclick="closeModal()">完了</button>
-          <div class="modal-title">氏名の表示方法</div>
-          <span class="header-btn"></span>
-        </div>
-        <div class="modal-body">
-          <div style="font-size:12px; color:#888; margin:4px 4px 10px; line-height:1.5;">
-            一覧画面でのお客様名の表示方法。詳細画面では常にフル表示されます。
-          </div>
-          <div class="group">
-            ${opts.map(o => `
-              <div class="mode-opt" onclick="setNameMode('${o.id}')">
-                <div>
-                  <div class="mode-opt-label">${o.label}</div>
-                  <div class="mode-opt-ex">${o.ex}</div>
-                </div>
-                <div class="check-mark">${state.settings.nameDisplayMode === o.id ? '✓' : ''}</div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-  document.body.insertAdjacentHTML('beforeend', `<div id="overlay">${html}</div>`);
-}
-
-function setNameMode(m) {
-  state.settings.nameDisplayMode = m;
-  saveSettings();
-  closeModal();
-  renderMain();
-}
-
-// ====== 顧客マスター ======
-function openCustomerList() {
-  const html = `
-    <div class="modal" onclick="closeModal(event)">
-      <div class="modal-sheet" onclick="event.stopPropagation()">
-        <div class="modal-header">
-          <button class="header-btn" onclick="closeModal()">閉じる</button>
-          <div class="modal-title">顧客マスター</div>
-          <button class="header-btn" onclick="openCustomerForm()" style="font-weight:600;">＋追加</button>
-        </div>
-        <div class="modal-body">
-          <div style="background:#fff4e0; padding:10px; border-radius:9px; margin-bottom:12px; font-size:11px; color:#8b6b00; line-height:1.5;">
-            🛡 個人情報保護のため、姓のみ・顧客コードのみを保存します
-          </div>
-          ${state.customers.length === 0 ? `
-            <div class="empty">
-              <div class="empty-icon">📒</div>
-              <div>顧客マスターはまだ空です</div>
-              <div style="margin-top:6px; font-size:11px;">右上の「＋追加」から登録</div>
-            </div>
-          ` : `
-            <div class="group">
-              ${state.customers.map(c => `
-                <div class="cust-row" onclick="openCustomerForm('${c.id}')">
-                  <div class="cust-avatar">${c.lastName.charAt(0)}</div>
-                  <div class="cust-info">
-                    <div class="cust-name">${c.lastName} 様 <span style="color:#888; font-size:11px;">(#${c.code})</span></div>
-                    <div class="cust-meta">${c.memo || (c.frequentPickup || c.frequentDropoff ? (c.frequentPickup || '?') + ' → ' + (c.frequentDropoff || '?') : 'メモなし')}</div>
-                  </div>
-                  <span style="color:#aaa;">＞</span>
-                </div>
-              `).join('')}
-            </div>
-          `}
-        </div>
-      </div>
-    </div>
-  `;
-  document.body.insertAdjacentHTML('beforeend', `<div id="overlay">${html}</div>`);
-}
-
-let custForm = null;
-function openCustomerForm(editId) {
-  if (editId) {
-    const c = state.customers.find(x => x.id === editId);
-    custForm = JSON.parse(JSON.stringify(c));
-    custForm._editId = editId;
-  } else {
-    const nextCode = String(state.customers.length + 1).padStart(3, '0');
-    custForm = {
-      id: 'c_' + Date.now(),
-      code: nextCode,
-      lastName: '',
-      memo: '',
-      frequentPickup: '',
-      frequentDropoff: '',
-      createdAt: Date.now()
-    };
-  }
-  drawCustomerForm();
-}
-
-function drawCustomerForm() {
-  closeModal();
-  const html = `
-    <div class="modal" onclick="closeModal(event)">
-      <div class="modal-sheet" onclick="event.stopPropagation()">
-        <div class="modal-header">
-          <button class="header-btn" onclick="closeModal(); openCustomerList()">戻る</button>
-          <div class="modal-title">${custForm._editId ? '顧客を編集' : '顧客を追加'}</div>
-          <button class="header-btn" onclick="saveCustomer()" style="font-weight:600;">保存</button>
-        </div>
-        <div class="modal-body">
-          <div class="section">
-            <div class="input-row">
-              <div class="input-label">顧客コード（自動採番）</div>
-              <input class="input-field" type="text" value="${custForm.code}" oninput="custForm.code=this.value">
-            </div>
-            <div class="input-row">
-              <div class="input-label">姓のみ ※ フルネームは保存しないでください</div>
-              <input class="input-field" type="text" value="${escHtml(custForm.lastName)}" placeholder="例：田中" oninput="custForm.lastName=this.value">
-            </div>
-            <div class="input-row">
-              <div class="input-label">特徴メモ（任意）</div>
-              <input class="input-field" type="text" value="${escHtml(custForm.memo)}" placeholder="例：車イス常用、週2回利用" oninput="custForm.memo=this.value">
-            </div>
-          </div>
-          <div class="section">
-            <div class="input-row">
-              <div class="input-label">よく使うお迎え場所</div>
-              <input class="input-field" type="text" value="${escHtml(custForm.frequentPickup)}" placeholder="例：〇〇ホーム" oninput="custForm.frequentPickup=this.value">
-            </div>
-            <div class="input-row">
-              <div class="input-label">よく使う行き先</div>
-              <input class="input-field" type="text" value="${escHtml(custForm.frequentDropoff)}" placeholder="例：△△病院" oninput="custForm.frequentDropoff=this.value">
-            </div>
-          </div>
-          ${custForm._editId ? `<button class="btn-primary btn-danger" onclick="deleteCustomer('${custForm._editId}')">この顧客を削除</button>` : ''}
-        </div>
-      </div>
-    </div>
-  `;
-  document.body.insertAdjacentHTML('beforeend', `<div id="overlay">${html}</div>`);
-}
-
-function saveCustomer() {
-  if (!custForm.lastName) { showToast('姓を入力してください'); return; }
-  if (custForm._editId) {
-    const idx = state.customers.findIndex(x => x.id === custForm._editId);
-    delete custForm._editId;
-    if (idx >= 0) state.customers[idx] = custForm;
-  } else {
-    state.customers.push(custForm);
-  }
-  saveCustomers();
-  closeModal();
-  openCustomerList();
-  showToast('保存しました');
-}
-
-function deleteCustomer(id) {
-  if (!confirm('この顧客マスターを削除しますか？')) return;
-  state.customers = state.customers.filter(c => c.id !== id);
-  saveCustomers();
-  closeModal();
-  openCustomerList();
-  showToast('削除しました');
-}
-
-// ====== CSVエクスポート ======
-function exportCSVConfirm() {
-  const html = `
-    <div class="warning-modal" onclick="closeWarning(event)">
-      <div class="warning-box" onclick="event.stopPropagation()">
-        <div class="warning-icon">⚠️</div>
-        <div class="warning-title">個人情報を含むファイル</div>
-        <div class="warning-text">
-          出力するCSVファイルには <strong>お客様の姓・お迎え場所・行き先など個人情報</strong> が含まれます。<br><br>
-          ・ファイルの保存先と共有先に十分注意してください<br>
-          ・不要になったら速やかに削除してください<br>
-          ・第三者と共有する場合は同意が必要です
-        </div>
-        <div class="warning-check" onclick="toggleExportAgree(this)">
-          <div class="check" id="exportChk"></div>
-          <span>上記を理解しました</span>
-        </div>
-        <div class="warning-buttons">
-          <button class="warning-btn cancel" onclick="closeWarning()">キャンセル</button>
-          <button class="warning-btn danger" id="exportBtn" disabled onclick="doExportCSV()">エクスポート</button>
-        </div>
-      </div>
-    </div>
-  `;
-  document.body.insertAdjacentHTML('beforeend', `<div id="warning">${html}</div>`);
-}
-
-function toggleExportAgree(el) {
-  const chk = el.querySelector('.check');
-  chk.classList.toggle('on');
-  chk.textContent = chk.classList.contains('on') ? '✓' : '';
-  document.getElementById('exportBtn').disabled = !chk.classList.contains('on');
-}
-function closeWarning(e) {
-  if (e && e.target !== e.currentTarget) return;
-  const el = document.getElementById('warning'); if (el) el.remove();
-}
-
-function doExportCSV() {
-  closeWarning();
-  const rows = [['日付','時刻','お客様名','お迎え場所','行き先','メーター運賃','基本介助料','車イス','付添料','割引','タクチケ','合計']];
-  state.rides.sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time)).forEach(r => {
-    rows.push([
-      r.date, r.time, r.name||'', r.pickup||'', r.dropoff||'',
-      r.meter||0, r.careBase||0, r.wheel?'○':'', r.attend||0,
-      formatDiscount(r.discount), r.ticket||'', r.total
-    ]);
-  });
-  // BOM付きUTF-8
-  const csv = '\uFEFF' + rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `運行記録_${todayStr()}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
-  showToast('エクスポートしました');
-}
-
-// ====== その他操作 ======
-function changePasscode() {
-  if (!confirm('パスコードを再設定しますか？\n（現在のパスコードは無効になります）')) return;
-  localStorage.removeItem('passcode-hash');
-  renderSetupPasscode();
-}
-
-function deleteAllData() {
-  if (!confirm('全ての運行記録・顧客マスター・設定を削除します。この操作は取り消せません。本当に削除しますか？')) return;
-  if (!confirm('もう一度確認します。全データを削除しますか？')) return;
-  localStorage.clear();
-  showToast('全データを削除しました');
-  setTimeout(() => location.reload(), 500);
-}
-
-function lockNow() {
-  renderLock();
-}
-
-function autoDeleteOldData() {
-  if (!state.settings.autoDeleteMonths) return;
-  const cutoff = new Date();
-  cutoff.setMonth(cutoff.getMonth() - state.settings.autoDeleteMonths);
-  const cutoffStr = cutoff.toISOString().slice(0,10);
-  const before = state.rides.length;
-  state.rides = state.rides.filter(r => r.date >= cutoffStr);
-  if (state.rides.length < before) {
-    saveRides();
-  }
-}
-
-// ====== ユーティリティ ======
-function closeModal(e) {
-  if (e && e.target !== e.currentTarget) return;
-  const el = document.getElementById('overlay');
-  if (el) el.remove();
-}
-function showToast(msg) {
-  const el = document.createElement('div');
-  el.className = 'toast';
-  el.textContent = msg;
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 2000);
-}
-function todayStr() {
-  const d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-}
-function formatDate(d, withDay) {
-  const days = ['日','月','火','水','木','金','土'];
-  return (d.getMonth()+1) + '月' + d.getDate() + '日' + (withDay ? '（' + days[d.getDay()] + '）' : '');
-}
-function formatDateShort(s) {
-  const [y, m, d] = s.split('-');
-  const dt = new Date(s);
-  const days = ['日','月','火','水','木','金','土'];
-  return `${parseInt(m)}/${parseInt(d)}（${days[dt.getDay()]}）`;
-}
-function escHtml(s) {
-  if (s == null) return '';
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-function uniqueBy(arr, fn) {
-  const seen = new Set(); const out = [];
-  arr.forEach(x => { const k = fn(x); if (!seen.has(k)) { seen.add(k); out.push(x); } });
-  return out;
-}
-
-// ====== 自動ロック ======
-function resetActivity() { lockState.lastActivity = Date.now(); }
-document.addEventListener('click', resetActivity);
-document.addEventListener('touchstart', resetActivity);
-
-setInterval(() => {
-  const mins = state.settings.autoLockMinutes;
-  if (!mins) return;
-  if (Date.now() - lockState.lastActivity > mins * 60 * 1000) {
-    if (!document.querySelector('.lock')) renderLock();
-  }
-}, 10000);
-
-// ====== バックグラウンドぼかし ======
-document.addEventListener('visibilitychange', () => {
-  if (!state.settings.privacyMaskMode) return;
-  if (document.hidden) {
-    if (!document.getElementById('bgblur')) {
-      document.body.insertAdjacentHTML('beforeend', `<div id="bgblur" class="bg-blur"><div class="bg-blur-icon">🔒</div><div class="bg-blur-text">運行記録</div></div>`);
     }
-  } else {
-    const el = document.getElementById('bgblur');
-    if (el) el.remove();
-    // 60秒以上バックグラウンドだったら再ロック
-    if (Date.now() - lockState.lastActivity > 60000) {
-      renderLock();
+
+    function init() {
+      loadAll();
+      maybeAutoDelete();
+      buildKeypad('setupKeypad', 'setupPress');
+      buildKeypad('lockKeypad', 'lockPress');
+      renderPinDots('setupDots', 0);
+      renderPinDots('lockDots', 0);
+      document.getElementById('agreeCheck').addEventListener('change', e => {
+        document.getElementById('agreeBtn').disabled = !e.target.checked;
+      });
+      document.getElementById('agreeBtn').addEventListener('click', () => {
+        state.config.agreed = true;
+        saveConfig();
+        document.getElementById('privacyScreen').classList.add('hidden');
+        document.getElementById('passcodeSetupScreen').classList.remove('hidden');
+      });
+      document.getElementById('lockBtn').addEventListener('click', showLockScreen);
+      document.getElementById('addRideFab').addEventListener('click', () => openRideForm());
+      document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+      document.getElementById('overlay').addEventListener('click', e => { if (e.target.id === 'overlay') closeSheet(); });
+      document.addEventListener('visibilitychange', () => { if (document.hidden && state.config.passcode) showLockScreen(); });
+      ['click','input','touchstart'].forEach(ev => document.addEventListener(ev, () => state.lastActive = Date.now(), { passive:true }));
+      setInterval(() => {
+        if (!document.getElementById('appRoot').classList.contains('hidden') && Date.now() - state.lastActive > 60000 && state.config.passcode) showLockScreen();
+      }, 5000);
+      window.addEventListener('beforeprint', () => alert('スクリーンショットや印刷の前に、個人情報が出ていないか確認してください。'));
+      if (!state.config.agreed) document.getElementById('privacyScreen').classList.remove('hidden');
+      else if (!state.config.passcode) document.getElementById('passcodeSetupScreen').classList.remove('hidden');
+      else showLockScreen();
     }
-  }
-});
 
-// ====== スクショ検出（iOSではキーボードショートカット非対応のため代替策） ======
-// iOSでは正確なスクショ検出は不可だが、画面録画開始時の検出は可能
-// ここでは警告を表示するモーダル機能のみ用意（手動トリガー）
-
-// ====== サービスワーカー（PWAオフライン対応） ======
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
-}
-
-// 起動
-init();
-</script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+    }
+    init();
+  </script>
 </body>
 </html>
