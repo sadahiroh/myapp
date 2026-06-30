@@ -780,7 +780,66 @@
       saveConfig();
     }
 
-    function exportCsv() {
+    function isIosLike() {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    }
+
+    async function saveBlobFile(blob, fileName, titleText='ファイル') {
+      try {
+        if (navigator.canShare && navigator.share) {
+          const file = new File([blob], fileName, { type: blob.type || 'application/octet-stream' });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: titleText });
+            return true;
+          }
+        }
+      } catch (e) {
+        // share cancelなどは次の保存方法へフォールバック
+      }
+
+      if (isIosLike()) {
+        return await new Promise((resolve) => {
+          try {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              try {
+                const a = document.createElement('a');
+                a.href = reader.result;
+                a.target = '_blank';
+                a.rel = 'noopener';
+                a.click();
+                setTimeout(() => {
+                  alert('保存画面が出ない時は、開いたページで共有ボタンから「ファイルに保存」を選んでください。');
+                }, 300);
+                resolve(true);
+              } catch (err) {
+                resolve(false);
+              }
+            };
+            reader.readAsDataURL(blob);
+          } catch (err) {
+            resolve(false);
+          }
+        });
+      }
+
+      try {
+        const a = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    async function exportCsv() {
       if (!state.rides.length) { alert('書き出すデータがありません。'); return; }
       const ok = confirm('個人情報が入っていないか確認してから書き出してください。CSVを書き出しますか？');
       if (!ok) return;
@@ -788,14 +847,11 @@
       const rows = state.rides.map(r => [r.date,r.time,r.name,r.pickup,r.dropoff,r.meter,r.careBase,r.wheelFee,r.attend,r.highway,r.discountType,r.discountValue,r.total,r.memo]);
       const csv = [header, ...rows].map(row => row.map(v => '"' + String(v ?? '').replaceAll('"', '""') + '"').join(',')).join('\n');
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'taxi_records_' + todayStr() + '.csv';
-      a.click();
-      URL.revokeObjectURL(a.href);
+      const saved = await saveBlobFile(blob, 'taxi_records_' + todayStr() + '.csv', 'CSV書き出し');
+      if (!saved) alert('CSVの保存に失敗しました。Safariで開いて再度お試しください。');
     }
 
-    function exportBackup() {
+    async function exportBackup() {
       const data = {
         app: '介護タクシー運行記録アプリ',
         version: 3,
@@ -808,11 +864,8 @@
         customers: state.customers.map(normalizeCustomer)
       };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8;' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'taxi_backup_' + todayStr() + '.json';
-      a.click();
-      URL.revokeObjectURL(a.href);
+      const saved = await saveBlobFile(blob, 'taxi_backup_' + todayStr() + '.json', 'バックアップ');
+      if (!saved) alert('バックアップの保存に失敗しました。Safariで開いて再度お試しください。');
     }
 
     function restoreBackupFile(input) {
