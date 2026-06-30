@@ -547,9 +547,11 @@
           <button class="secondary" onclick="exportBackup()">バックアップを書き出す</button>
           <div class="hint">機種変更やキャッシュ削除に備えて、定期的な保存がおすすめです。</div>
           <input id="restoreFileInput" type="file" accept="application/json,.json" onchange="restoreBackupFile(this)" style="display:none">
-          <div style="height:2px"></div>
           <button class="secondary" onclick="document.getElementById('restoreFileInput').click()">バックアップを復元する</button>
           <div class="hint">復元すると、今の記録と顧客データはバックアップ内容で置き換わります。</div>
+          <input id="restoreCsvInput" type="file" accept=".csv,text/csv" onchange="restoreCsvFile(this)" style="display:none">
+          <button class="secondary" onclick="document.getElementById('restoreCsvInput').click()">CSVから記録を復元する</button>
+          <div class="hint">旧バージョンのCSVから記録を戻せます。おすすめは「今の記録をCSVで置き換える」です。顧客マスターはCSVでは戻りません。</div>
           <div style="height:10px"></div>
           <button class="danger" onclick="clearAllData()">全データ削除</button>
         </div>
@@ -854,7 +856,7 @@
     async function exportBackup() {
       const data = {
         app: '介護タクシー運行記録アプリ',
-        version: 3,
+        version: 5,
         exportedAt: new Date().toISOString(),
         config: {
           autoDeleteYear: !!state.config.autoDeleteYear,
@@ -900,6 +902,140 @@
           alert('復元が完了しました。');
         } catch (e) {
           alert('バックアップの読み込みに失敗しました。\n別のファイルか、正しいJSONファイルか確認してください。');
+        }
+        input.value = '';
+      };
+      reader.readAsText(file, 'utf-8');
+    }
+
+    function normalizeCsvHeader(text='') {
+      return String(text).replace(/^\uFEFF/, '').replace(/\s+/g, '').trim().toLowerCase();
+    }
+    function parseCsvText(text='') {
+      const rows = [];
+      let row = [];
+      let cell = '';
+      let inQuotes = false;
+      const src = String(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      for (let i = 0; i < src.length; i++) {
+        const ch = src[i];
+        if (inQuotes) {
+          if (ch === '"') {
+            if (src[i + 1] === '"') {
+              cell += '"';
+              i++;
+            } else {
+              inQuotes = false;
+            }
+          } else {
+            cell += ch;
+          }
+        } else {
+          if (ch === '"') {
+            inQuotes = true;
+          } else if (ch === ',') {
+            row.push(cell);
+            cell = '';
+          } else if (ch === '\n') {
+            row.push(cell);
+            rows.push(row);
+            row = [];
+            cell = '';
+          } else {
+            cell += ch;
+          }
+        }
+      }
+      row.push(cell);
+      rows.push(row);
+      return rows.filter(r => r.some(v => String(v || '').trim() !== ''));
+    }
+    function csvGet(row, indexMap, names) {
+      for (const name of names) {
+        const idx = indexMap[normalizeCsvHeader(name)];
+        if (idx !== undefined) return String(row[idx] ?? '').trim();
+      }
+      return '';
+    }
+    function parseMoneyLike(value) {
+      const cleaned = String(value || '').replace(/[¥￥,円\s]/g, '');
+      const n = parseInt(cleaned, 10);
+      return Number.isFinite(n) ? n : 0;
+    }
+    function truthyLike(value) {
+      const v = String(value || '').trim().toLowerCase();
+      return ['1','true','yes','あり','有','利用','使用','on','y'].includes(v);
+    }
+    function inferDiscountType(rawType, rawValue) {
+      const type = normalizeCsvHeader(rawType);
+      if (type.includes('percent') || type === '％' || type === '%') return 'percent';
+      if (type.includes('amount') || type.includes('金額')) return 'amount';
+      const value = String(rawValue || '').trim();
+      if (value.includes('%') || value.includes('％')) return 'percent';
+      return parseMoneyLike(value) ? 'amount' : 'none';
+    }
+    function restoreCsvFile(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const rows = parseCsvText(reader.result);
+          if (rows.length < 2) throw new Error('empty');
+          const header = rows[0].map(normalizeCsvHeader);
+          const indexMap = {};
+          header.forEach((h, i) => { if (!(h in indexMap)) indexMap[h] = i; });
+          const imported = [];
+          for (const row of rows.slice(1)) {
+            const date = csvGet(row, indexMap, ['日付', 'date']);
+            const time = csvGet(row, indexMap, ['時間', 'time']);
+            const name = csvGet(row, indexMap, ['名前', '氏名', 'name']);
+            const pickup = csvGet(row, indexMap, ['お迎え場所', '迎え場所', 'pickup']);
+            const dropoff = csvGet(row, indexMap, ['行き先', 'dropoff', 'destination']);
+            const meter = parseMoneyLike(csvGet(row, indexMap, ['メーター運賃', 'meter']));
+            const careBase = parseMoneyLike(csvGet(row, indexMap, ['基本介助料', 'carebase']));
+            const attend = parseMoneyLike(csvGet(row, indexMap, ['付添料', '付添', 'attend']));
+            const highway = parseMoneyLike(csvGet(row, indexMap, ['高速料金', 'highway']));
+            const wheelRaw = csvGet(row, indexMap, ['車イス料金', '車イス', 'wheelfee', 'wheel']);
+            let wheelFee = parseMoneyLike(wheelRaw);
+            const notes = [];
+            if (!wheelFee && truthyLike(wheelRaw)) notes.push('旧CSV: 車イス利用あり');
+            const rawDiscountType = csvGet(row, indexMap, ['割引種別', 'discounttype']);
+            const rawDiscountValue = csvGet(row, indexMap, ['割引値', '割引', 'discountvalue', 'discount']);
+            const discountType = inferDiscountType(rawDiscountType, rawDiscountValue);
+            const discountValue = parseMoneyLike(rawDiscountValue.replace(/[％%]/g, ''));
+            const memo = [csvGet(row, indexMap, ['メモ', 'memo']), ...notes].filter(Boolean).join(' / ');
+            const ride = normalizeRide({
+              id: uid('ride'),
+              date: date || todayStr(),
+              time,
+              name,
+              pickup,
+              dropoff,
+              meter,
+              careBase,
+              wheelFee,
+              attend,
+              highway,
+              discountType,
+              discountValue,
+              memo
+            });
+            const hasAny = [date,time,name,pickup,dropoff,meter,careBase,wheelRaw,attend,highway,rawDiscountValue,memo].some(v => String(v || '').trim() !== '' && String(v || '') !== '0');
+            if (hasAny) imported.push(ride);
+          }
+          if (!imported.length) throw new Error('no rows');
+          const ok = confirm('CSVから記録を復元しますか？\n\nおすすめ: 今の記録をCSVで置き換える\n\n読み込む記録: ' + imported.length + '件\n顧客マスターはそのまま残ります。');
+          if (!ok) {
+            input.value = '';
+            return;
+          }
+          state.rides = imported;
+          saveRides();
+          renderAll();
+          alert('CSVの復元が完了しました。');
+        } catch (e) {
+          alert('CSVの読み込みに失敗しました。\n旧バージョンのCSVか、正しいCSVファイルか確認してください。');
         }
         input.value = '';
       };
