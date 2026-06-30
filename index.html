@@ -12,39 +12,39 @@
       --card: #ffffff;
       --line: #dbe7f7;
       --text: #1d2a3a;
-      --sub: #67788f;
+      --sub: #66778f;
       --primary: #1d6fd6;
-      --primary-2: #0d57b5;
-      --warn: #fff8e7;
-      --danger: #d64545;
-      --ok: #0f9f67;
+      --primary-dark: #0d57b5;
+      --danger: #d94b4b;
+      --warn-bg: #fff9e8;
+      --warn-line: #f4df9a;
       --shadow: 0 10px 28px rgba(18, 64, 124, 0.10);
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
-      background: linear-gradient(180deg, #f6faff 0%, var(--bg) 100%);
+      background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 100%);
       color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
       -webkit-tap-highlight-color: transparent;
     }
     .app {
-      max-width: 720px;
+      max-width: 760px;
       margin: 0 auto;
       min-height: 100vh;
-      padding-bottom: 88px;
+      padding-bottom: 96px;
     }
     .topbar {
       position: sticky;
       top: 0;
       z-index: 10;
-      background: rgba(246, 250, 255, 0.9);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--line);
       padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(247, 251, 255, 0.92);
+      backdrop-filter: blur(10px);
     }
     .topbar h1 { margin: 0; font-size: 20px; }
-    .topbar .sub { margin-top: 4px; color: var(--sub); font-size: 13px; }
+    .sub { color: var(--sub); font-size: 13px; }
     .page { padding: 14px; }
     .card {
       background: var(--card);
@@ -55,75 +55,123 @@
       margin-bottom: 14px;
     }
     .hero {
-      background: linear-gradient(135deg, var(--primary), #5ca2ff);
       color: #fff;
       border: none;
+      background: linear-gradient(135deg, var(--primary), #63a8ff);
     }
-    .hero .mini { opacity: 0.9; font-size: 12px; }
-    .hero .sum { font-size: 30px; font-weight: 800; margin-top: 6px; }
-    .section-title {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-    .section-title h2 { margin: 0; font-size: 17px; }
-    .muted { color: var(--sub); font-size: 13px; }
-    .ride {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 12px;
-      margin-bottom: 10px;
-      background: #fbfdff;
-    }
-    .ride-head, .row, .between {
+    .hero .sum { font-size: 30px; font-weight: 800; margin: 6px 0 4px; }
+    .section-title, .between, .ride-head {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 10px;
     }
-    .ride-head { margin-bottom: 8px; }
+    .section-title h2, h2 { margin: 0; font-size: 17px; }
+    .muted { color: var(--sub); font-size: 13px; }
+    .ride {
+      background: #fbfdff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
     .ride .name { font-weight: 700; }
     .badge {
       display: inline-block;
+      margin: 6px 6px 0 0;
       padding: 4px 8px;
       border-radius: 999px;
       font-size: 12px;
       background: #e9f2ff;
-      color: var(--primary-2);
-      margin-right: 6px;
-      margin-top: 6px;
+      color: var(--primary-dark);
     }
-    .total { font-weight: 800; font-size: 18px; }
-    button, .btn {
+    .total { font-size: 18px; font-weight: 800; }
+    .date-group-title {
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: var(--primary-dark);
+      font-weight: 800;
+    }
+    .empty {
+      text-align: center;
+      color: var(--sub);
+      padding: 24px 12px;
+    }
+    .notice {
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-line);
+      border-radius: 12px;
+      color: #7a5a09;
+      font-size: 13px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .hint {
+      color: var(--sub);
+      font-size: 12px;
+      margin: 4px 0 10px;
+    }
+    .sum-box {
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-line);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .sum-box strong { font-size: 22px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .hidden { display: none !important; }
+    button {
+      width: 100%;
       border: none;
-      background: var(--primary);
-      color: #fff;
       border-radius: 12px;
       padding: 12px 14px;
+      background: var(--primary);
+      color: #fff;
       font-size: 15px;
       font-weight: 700;
       cursor: pointer;
-      width: 100%;
     }
-    button.secondary, .btn.secondary {
+    button.secondary {
       background: #edf4ff;
-      color: var(--primary-2);
+      color: var(--primary-dark);
       border: 1px solid #cfe0f6;
     }
-    button.ghost { background: transparent; color: var(--primary-2); border: 1px solid #cfe0f6; }
+    button.ghost {
+      width: auto;
+      background: transparent;
+      color: var(--primary-dark);
+      border: 1px solid #cfe0f6;
+    }
     button.danger { background: var(--danger); }
-    .mini-btn { width: auto; padding: 8px 10px; font-size: 13px; border-radius: 10px; }
+    .mini-btn {
+      width: auto;
+      padding: 8px 10px;
+      font-size: 13px;
+      border-radius: 10px;
+    }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid #cfe0f6;
+      border-radius: 12px;
+      background: #fff;
+      color: var(--text);
+      padding: 12px;
+      font-size: 16px;
+      margin-bottom: 12px;
+    }
+    label { display:block; font-size:13px; color: var(--sub); margin-bottom: 6px; font-weight: 700; }
+    textarea { min-height: 84px; resize: vertical; }
     .fab {
       position: fixed;
       right: 18px;
-      bottom: 88px;
+      bottom: 92px;
       width: 60px;
       height: 60px;
       border-radius: 50%;
       font-size: 32px;
       line-height: 1;
-      box-shadow: 0 14px 30px rgba(29, 111, 214, 0.4);
+      box-shadow: 0 14px 30px rgba(29,111,214,.38);
       z-index: 20;
     }
     .tabs {
@@ -131,82 +179,42 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(255,255,255,0.96);
-      backdrop-filter: blur(12px);
-      border-top: 1px solid var(--line);
+      z-index: 30;
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 4px;
       padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
-      z-index: 30;
+      border-top: 1px solid var(--line);
+      background: rgba(255,255,255,.96);
+      backdrop-filter: blur(12px);
     }
     .tab {
-      text-align: center;
-      color: var(--sub);
-      font-size: 12px;
       background: transparent;
-      border: none;
-      padding: 8px 6px;
-      border-radius: 12px;
-    }
-    .tab.active { background: #eaf3ff; color: var(--primary-2); font-weight: 700; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    label { display: block; font-size: 13px; color: var(--sub); margin-bottom: 6px; font-weight: 700; }
-    input, select, textarea {
-      width: 100%;
-      border: 1px solid #cfe0f6;
-      border-radius: 12px;
-      padding: 12px;
-      font-size: 16px;
-      background: #fff;
-      color: var(--text);
-      margin-bottom: 12px;
-    }
-    textarea { min-height: 86px; resize: vertical; }
-    .hint {
-      font-size: 12px;
       color: var(--sub);
-      margin-top: -6px;
-      margin-bottom: 10px;
-    }
-    .sum-box {
-      background: var(--warn);
-      border: 1px solid #f3df9c;
-      border-radius: 14px;
-      padding: 12px;
-      margin-bottom: 12px;
-    }
-    .sum-box strong { font-size: 22px; }
-    .notice {
-      background: #fff9ea;
-      border: 1px solid #ffe2a8;
-      color: #7a5a09;
+      border: none;
+      padding: 8px 4px;
       border-radius: 12px;
-      padding: 12px;
-      font-size: 13px;
-      margin-bottom: 12px;
+      font-size: 12px;
+      width: 100%;
     }
-    .hidden { display: none !important; }
-    .sheet, .overlay {
+    .tab.active { background: #eaf3ff; color: var(--primary-dark); font-weight: 800; }
+    .overlay {
       position: fixed;
       inset: 0;
       z-index: 40;
-    }
-    .overlay {
-      background: rgba(13, 31, 54, 0.38);
       display: none;
       align-items: flex-end;
       justify-content: center;
       padding: 12px;
+      background: rgba(13,31,54,.38);
     }
-    .overlay.show { display: flex; }
+    .overlay.show { display:flex; }
     .sheet-body {
-      background: #fff;
       width: 100%;
-      max-width: 720px;
+      max-width: 760px;
       max-height: 92vh;
       overflow: auto;
+      background: #fff;
       border-radius: 24px 24px 0 0;
       padding: 16px;
       box-shadow: 0 -10px 30px rgba(0,0,0,.15);
@@ -227,26 +235,14 @@
       padding: 20px;
       box-shadow: var(--shadow);
     }
-    .pin-dots { display: flex; gap: 10px; justify-content: center; margin: 16px 0; }
-    .pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #a9c6eb; }
+    .pin-dots { display:flex; justify-content:center; gap:10px; margin: 16px 0; }
+    .pin-dot { width:14px; height:14px; border-radius:50%; border:2px solid #a9c6eb; }
     .pin-dot.filled { background: var(--primary); border-color: var(--primary); }
-    .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .keypad { display:grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
     .keypad button { font-size: 22px; padding: 16px; border-radius: 16px; }
-    .small { font-size: 12px; color: var(--sub); }
-    .list-item {
-      padding: 12px 0;
-      border-bottom: 1px solid #eef3fb;
-    }
-    .list-item:last-child { border-bottom: none; }
-    .pill-link { color: var(--primary-2); font-weight: 700; font-size: 13px; }
-    .empty {
-      text-align: center;
-      padding: 24px 12px;
-      color: var(--sub);
-    }
     @media (min-width: 768px) {
       .page { padding: 20px; }
-      .fab { right: max(18px, calc((100vw - 720px) / 2 + 18px)); }
+      .fab { right: max(18px, calc((100vw - 760px) / 2 + 18px)); }
     }
   </style>
 </head>
@@ -255,7 +251,7 @@
     <div class="auth-card">
       <h2 style="margin-top:0">はじめに</h2>
       <p>このアプリは、端末の中に記録を保存します。</p>
-      <div class="notice">個人情報は入れすぎないようにしてください。<br>お名前は姓のみ登録がおすすめです。</div>
+      <div class="notice">個人情報は入れすぎないようにしてください。お名前は姓のみ登録がおすすめです。</div>
       <label style="display:flex; gap:8px; align-items:flex-start; font-weight:400; color:var(--text)">
         <input id="agreeCheck" type="checkbox" style="width:auto; margin:3px 0 0 0">
         <span>内容を確認しました</span>
@@ -267,7 +263,7 @@
   <div id="passcodeSetupScreen" class="center-screen hidden">
     <div class="auth-card">
       <h2 id="setupTitle" style="margin-top:0">4桁のパスコードを決める</h2>
-      <p id="setupText" class="small">あとでアプリを開く時に使います。</p>
+      <p id="setupText" class="sub">あとでアプリを開く時に使います。</p>
       <div id="setupDots" class="pin-dots"></div>
       <div id="setupKeypad" class="keypad"></div>
     </div>
@@ -276,7 +272,7 @@
   <div id="lockScreen" class="center-screen hidden">
     <div class="auth-card">
       <h2 style="margin-top:0">ロック中</h2>
-      <p class="small">4桁のパスコードを入れてください。</p>
+      <p class="sub">4桁のパスコードを入れてください。</p>
       <div id="lockDots" class="pin-dots"></div>
       <div id="lockError" class="notice hidden" style="background:#fff0f0;border-color:#ffcccc;color:#9c2b2b">パスコードが違います。</div>
       <div id="lockKeypad" class="keypad"></div>
@@ -295,6 +291,7 @@
     </div>
 
     <div id="page-home" class="page"></div>
+    <div id="page-history" class="page hidden"></div>
     <div id="page-stats" class="page hidden"></div>
     <div id="page-customers" class="page hidden"></div>
     <div id="page-settings" class="page hidden"></div>
@@ -303,19 +300,16 @@
 
     <div class="tabs">
       <button class="tab active" data-tab="home">今日</button>
+      <button class="tab" data-tab="history">履歴</button>
       <button class="tab" data-tab="stats">集計</button>
       <button class="tab" data-tab="customers">顧客</button>
       <button class="tab" data-tab="settings">設定</button>
     </div>
   </div>
 
-  <div id="overlay" class="overlay">
-    <div class="sheet-body" id="sheetBody"></div>
-  </div>
+  <div id="overlay" class="overlay"><div id="sheetBody" class="sheet-body"></div></div>
 
   <script>
-    const WHEEL_DEFAULT = 0;
-    const HIGHWAY_DEFAULT = 0;
     const storageKeys = {
       config: 'taxi_app_config_v2',
       rides: 'taxi_app_rides_v2',
@@ -323,16 +317,12 @@
     };
 
     const state = {
-      config: {
-        agreed: false,
-        passcode: '',
-        autoDeleteYear: true,
-        nameMode: 'lastname'
-      },
+      config: { agreed: false, passcode: '', autoDeleteYear: true, nameMode: 'lastname' },
       rides: [],
       customers: [],
       activeTab: 'home',
       setupPin: '',
+      setupStage: 'first',
       setupConfirm: '',
       lockPin: '',
       editingRideId: null,
@@ -340,73 +330,64 @@
       lastActive: Date.now()
     };
 
-    function enc(text) {
-      return btoa(unescape(encodeURIComponent(text)));
-    }
-    function dec(text) {
-      try { return decodeURIComponent(escape(atob(text))); } catch { return ''; }
-    }
+    function enc(text) { return btoa(unescape(encodeURIComponent(text))); }
+    function dec(text) { try { return decodeURIComponent(escape(atob(text))); } catch { return ''; } }
     function saveConfig() { localStorage.setItem(storageKeys.config, enc(JSON.stringify(state.config))); }
     function saveRides() { localStorage.setItem(storageKeys.rides, enc(JSON.stringify(state.rides))); }
     function saveCustomers() { localStorage.setItem(storageKeys.customers, enc(JSON.stringify(state.customers))); }
-    function loadAll() {
-      const c = dec(localStorage.getItem(storageKeys.config) || '');
-      const r = dec(localStorage.getItem(storageKeys.rides) || '');
-      const m = dec(localStorage.getItem(storageKeys.customers) || '');
-      if (c) state.config = { ...state.config, ...JSON.parse(c) };
-      if (r) state.rides = JSON.parse(r).map(normalizeRide);
-      if (m) state.customers = JSON.parse(m).map(normalizeCustomer);
-    }
-    function normalizeRide(r={}) {
-      const ride = {
-        id: r.id || uid('ride'),
-        date: r.date || todayStr(),
-        time: r.time || '',
-        name: r.name || '',
-        pickup: r.pickup || '',
-        dropoff: r.dropoff || '',
-        meter: num(r.meter),
-        careBase: num(r.careBase),
-        wheelFee: num(r.wheelFee ?? r.wheel ?? 0),
-        attend: num(r.attend),
-        highway: num(r.highway),
-        discountType: r.discountType || (r.discount?.type || 'none'),
-        discountValue: num(r.discountValue ?? r.discount?.value ?? 0),
-        memo: r.memo || ''
-      };
-      ride.total = calcTotal(ride);
-      return ride;
-    }
-    function normalizeCustomer(c={}) {
-      return {
-        id: c.id || uid('cust'),
-        code: String(c.code || nextCustomerCode()),
-        lastName: c.lastName || c.name || '',
-        memo: c.memo || '',
-        frequentPickup: c.frequentPickup || '',
-        frequentDropoff: c.frequentDropoff || ''
-      };
-    }
     function todayStr() {
       const d = new Date();
-      return d.toISOString().slice(0, 10);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     }
     function nowTime() {
       const d = new Date();
-      return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
-    }
-    function yen(n) {
-      return '¥' + Number(n || 0).toLocaleString('ja-JP');
-    }
-    function uid(prefix='id') {
-      return prefix + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+      return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
     }
     function num(v) {
       const n = parseInt(v, 10);
       return Number.isFinite(n) ? n : 0;
     }
-    function escapeHtml(s='') {
-      return s.replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    function yen(n) { return '¥' + Number(n || 0).toLocaleString('ja-JP'); }
+    function uid(prefix='id') { return prefix + '_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); }
+    function escapeHtml(s='') { return String(s).replace(/[&<>\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+    function locationsShort(text='') {
+      return text ? (text.length > 12 ? text.slice(0, 12) + '…' : text) : '未入力';
+    }
+    function normalizeDateInput(value='') {
+      let s = String(value).trim();
+      if (!s) return todayStr();
+      s = s
+        .replace(/^\uFEFF/, '')
+        .replace(/[（(][^)）]*[)）]/g, '')
+        .replace(/曜/g,'')
+        .replace(/年/g,'/')
+        .replace(/月/g,'/')
+        .replace(/日/g,'')
+        .replace(/[.]/g,'/')
+        .replace(/-/g,'/')
+        .replace(/\s+/g,'')
+        .trim();
+      const m1 = s.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+      if (m1) return `${m1[1]}-${String(m1[2]).padStart(2,'0')}-${String(m1[3]).padStart(2,'0')}`;
+      const m2 = s.match(/^(\d{1,2})\/(\d{1,2})$/);
+      if (m2) {
+        const now = new Date();
+        let y = now.getFullYear();
+        const month = Number(m2[1]);
+        const day = Number(m2[2]);
+        const candidate = new Date(y, month - 1, day);
+        if (candidate.getTime() > now.getTime() + 1000 * 60 * 60 * 24 * 31) y -= 1;
+        return `${y}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      }
+      const m3 = s.match(/^(\d{8})$/);
+      if (m3) return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`;
+      const dt = new Date(s);
+      if (!Number.isNaN(dt.getTime())) return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+      return todayStr();
+    }
+    function nextCustomerCode() {
+      const nums = state.customers.map(c => num(c.code));
+      return String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3, '0');
     }
     function calcTotal(ride) {
       const base = num(ride.meter) + num(ride.careBase) + num(ride.wheelFee) + num(ride.attend) + num(ride.highway);
@@ -417,65 +398,126 @@
           : 0;
       return Math.max(0, base - discount);
     }
+    function normalizeRide(r={}) {
+      const ride = {
+        id: r.id || uid('ride'),
+        date: normalizeDateInput(r.date || todayStr()),
+        time: String(r.time || '').trim(),
+        name: String(r.name || r.lastName || '').trim(),
+        pickup: String(r.pickup || '').trim(),
+        dropoff: String(r.dropoff || '').trim(),
+        meter: num(r.meter),
+        careBase: num(r.careBase),
+        wheelFee: num(r.wheelFee ?? r.wheel ?? 0),
+        attend: num(r.attend),
+        highway: num(r.highway),
+        discountType: r.discountType || (r.discount?.type || 'none'),
+        discountValue: num(r.discountValue ?? r.discount?.value ?? 0),
+        memo: String(r.memo || '').trim()
+      };
+      ride.total = calcTotal(ride);
+      return ride;
+    }
+    function normalizeCustomer(c={}) {
+      return {
+        id: c.id || uid('cust'),
+        code: String(c.code || nextCustomerCode()),
+        lastName: String(c.lastName || c.name || '').trim(),
+        memo: String(c.memo || '').trim(),
+        frequentPickup: String(c.frequentPickup || '').trim(),
+        frequentDropoff: String(c.frequentDropoff || '').trim()
+      };
+    }
+    function loadAll() {
+      const c = dec(localStorage.getItem(storageKeys.config) || '');
+      const r = dec(localStorage.getItem(storageKeys.rides) || '');
+      const m = dec(localStorage.getItem(storageKeys.customers) || '');
+      if (c) state.config = { ...state.config, ...JSON.parse(c) };
+      if (r) state.rides = JSON.parse(r).map(normalizeRide);
+      if (m) state.customers = JSON.parse(m).map(normalizeCustomer);
+    }
     function maybeAutoDelete() {
       if (!state.config.autoDeleteYear) return;
       const limit = new Date();
       limit.setFullYear(limit.getFullYear() - 1);
-      const before = state.rides.length;
       state.rides = state.rides.filter(r => new Date(r.date) >= limit);
-      if (state.rides.length !== before) saveRides();
+      saveRides();
     }
+    function ridesToday() {
+      return state.rides.filter(r => r.date === todayStr()).sort((a,b) => (a.time > b.time ? 1 : -1));
+    }
+    function ridesAllDesc() {
+      return [...state.rides].sort((a,b) => (a.date === b.date ? (a.time < b.time ? 1 : -1) : (a.date < b.date ? 1 : -1)));
+    }
+    function totalOf(list) { return list.reduce((sum, r) => sum + num(r.total), 0); }
     function maskName(name) {
       if (!name) return '未登録';
       const mode = state.config.nameMode;
-      if (mode === 'full') return name;
+      if (mode === 'full' || mode === 'lastname') return name;
       if (mode === 'initial') return name.slice(0,1) + '.';
       if (mode === 'code') {
-        const customer = state.customers.find(c => c.lastName === name || c.fullName === name);
-        return customer ? '#' + customer.code : '#---';
+        const c = state.customers.find(x => x.lastName === name);
+        return c ? '#' + c.code : name;
       }
       return name;
     }
-    function locationsShort(text='') {
-      if (!text) return '未入力';
-      return text.length > 10 ? text.slice(0, 10) + '…' : text;
+    function groupByDate(list) {
+      const map = {};
+      list.forEach(r => {
+        if (!map[r.date]) map[r.date] = [];
+        map[r.date].push(r);
+      });
+      return Object.entries(map).sort((a,b) => a[0] < b[0] ? 1 : -1);
     }
-    function ridesToday() { return state.rides.filter(r => r.date === todayStr()).sort((a,b) => (a.time > b.time ? 1 : -1)); }
-    function totalOf(list) { return list.reduce((sum, r) => sum + num(r.total), 0); }
+
+    function rideCardHtml(r) {
+      return `
+        <div class="ride" onclick="openRideForm('${r.id}')">
+          <div class="ride-head">
+            <div>
+              <div class="name">${escapeHtml(maskName(r.name))}</div>
+              <div class="muted">${escapeHtml(locationsShort(r.pickup))} → ${escapeHtml(locationsShort(r.dropoff))}</div>
+            </div>
+            <div style="text-align:right">
+              <div class="muted">${escapeHtml(r.time || '')}</div>
+              <div class="total">${yen(r.total)}</div>
+            </div>
+          </div>
+          <div>
+            ${num(r.wheelFee) ? `<span class="badge">車イス ${yen(r.wheelFee)}</span>` : ''}
+            ${num(r.highway) ? `<span class="badge">高速 ${yen(r.highway)}</span>` : ''}
+            ${num(r.careBase) ? `<span class="badge">介助 ${yen(r.careBase)}</span>` : ''}
+            ${r.discountType !== 'none' ? '<span class="badge">割引あり</span>' : ''}
+          </div>
+        </div>`;
+    }
 
     function renderHome() {
       const list = ridesToday();
       document.getElementById('todayLabel').textContent = new Date().toLocaleDateString('ja-JP', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
-      const html = `
+      document.getElementById('page-home').innerHTML = `
         <div class="card hero">
-          <div class="mini">本日の合計</div>
+          <div class="sub" style="color:#fff;opacity:.9">本日の合計</div>
           <div class="sum">${yen(totalOf(list))}</div>
-          <div class="mini">件数 ${list.length}件</div>
+          <div class="sub" style="color:#fff;opacity:.9">件数 ${list.length}件</div>
         </div>
         <div class="card">
-          <div class="section-title"><h2>今日の記録</h2><span class="muted">新しい順に確認できます</span></div>
-          ${list.length ? list.map(r => `
-            <div class="ride" onclick="openRideForm('${r.id}')">
-              <div class="ride-head">
-                <div>
-                  <div class="name">${escapeHtml(maskName(r.name))}</div>
-                  <div class="muted">${escapeHtml(locationsShort(r.pickup))} → ${escapeHtml(locationsShort(r.dropoff))}</div>
-                </div>
-                <div style="text-align:right">
-                  <div class="muted">${escapeHtml(r.time || '')}</div>
-                  <div class="total">${yen(r.total)}</div>
-                </div>
-              </div>
-              <div>
-                ${num(r.wheelFee) ? '<span class="badge">車イス ' + yen(r.wheelFee) + '</span>' : ''}
-                ${num(r.highway) ? '<span class="badge">高速 ' + yen(r.highway) + '</span>' : ''}
-                ${num(r.careBase) ? '<span class="badge">介助 ' + yen(r.careBase) + '</span>' : ''}
-                ${r.discountType !== 'none' ? '<span class="badge">割引あり</span>' : ''}
-              </div>
-            </div>`).join('') : `<div class="empty">まだ記録がありません。<br>右下の「＋」から追加できます。</div>`}
-        </div>
-      `;
-      document.getElementById('page-home').innerHTML = html;
+          <div class="section-title"><h2>今日の記録</h2><span class="muted">右下の＋で追加</span></div>
+          ${list.length ? list.map(rideCardHtml).join('') : '<div class="empty">まだ記録がありません。<br>右下の「＋」から追加できます。</div>'}
+        </div>`;
+    }
+
+    function renderHistory() {
+      const groups = groupByDate(ridesAllDesc());
+      document.getElementById('page-history').innerHTML = `
+        <div class="card">
+          <div class="section-title"><h2>履歴</h2><span class="muted">すべての日の記録</span></div>
+          ${groups.length ? groups.map(([date, items]) => `
+            <div style="margin-bottom:16px">
+              <div class="date-group-title">${date} ・ ${items.length}件 ・ ${yen(totalOf(items))}</div>
+              ${items.map(rideCardHtml).join('')}
+            </div>`).join('') : '<div class="empty">履歴はまだありません。</div>'}
+        </div>`;
     }
 
     function renderStats() {
@@ -484,29 +526,22 @@
       const dayMap = {};
       monthRides.forEach(r => { dayMap[r.date] = (dayMap[r.date] || 0) + num(r.total); });
       const days = Object.entries(dayMap).sort((a,b) => a[0] < b[0] ? 1 : -1);
-      const meter = monthRides.reduce((s,r) => s + num(r.meter), 0);
-      const care = monthRides.reduce((s,r) => s + num(r.careBase), 0);
-      const wheel = monthRides.reduce((s,r) => s + num(r.wheelFee), 0);
-      const highway = monthRides.reduce((s,r) => s + num(r.highway), 0);
       document.getElementById('page-stats').innerHTML = `
         <div class="card">
           <div class="section-title"><h2>今月の集計</h2><span class="muted">${currentMonth.replace('-', '年')}月</span></div>
           <div class="grid-2">
             <div class="card" style="margin:0"><div class="muted">売上合計</div><div class="total">${yen(totalOf(monthRides))}</div></div>
             <div class="card" style="margin:0"><div class="muted">件数</div><div class="total">${monthRides.length}件</div></div>
-          </div>
-          <div class="grid-2" style="margin-top:10px">
-            <div class="card" style="margin:0"><div class="muted">メーター運賃</div><div>${yen(meter)}</div></div>
-            <div class="card" style="margin:0"><div class="muted">基本介助料</div><div>${yen(care)}</div></div>
-            <div class="card" style="margin:0"><div class="muted">車イス料金</div><div>${yen(wheel)}</div></div>
-            <div class="card" style="margin:0"><div class="muted">高速料金</div><div>${yen(highway)}</div></div>
+            <div class="card" style="margin:0"><div class="muted">メーター運賃</div><div>${yen(monthRides.reduce((s,r)=>s+num(r.meter),0))}</div></div>
+            <div class="card" style="margin:0"><div class="muted">基本介助料</div><div>${yen(monthRides.reduce((s,r)=>s+num(r.careBase),0))}</div></div>
+            <div class="card" style="margin:0"><div class="muted">車イス料金</div><div>${yen(monthRides.reduce((s,r)=>s+num(r.wheelFee),0))}</div></div>
+            <div class="card" style="margin:0"><div class="muted">高速料金</div><div>${yen(monthRides.reduce((s,r)=>s+num(r.highway),0))}</div></div>
           </div>
         </div>
         <div class="card">
-          <div class="section-title"><h2>日ごとの売上</h2><span class="pill-link" onclick="exportCsv()">CSVを書き出す</span></div>
-          ${days.length ? days.map(([date,total]) => `<div class="list-item between"><span>${date}</span><strong>${yen(total)}</strong></div>`).join('') : '<div class="empty">今月のデータがありません。</div>'}
-        </div>
-      `;
+          <div class="section-title"><h2>日ごとの売上</h2><button class="ghost mini-btn" onclick="exportCsv()">CSV書き出し</button></div>
+          ${days.length ? days.map(([date,total]) => `<div class="between" style="padding:12px 0;border-bottom:1px solid #eef3fb"><span>${date}</span><strong>${yen(total)}</strong></div>`).join('') : '<div class="empty">今月のデータがありません。</div>'}
+        </div>`;
     }
 
     function renderCustomers() {
@@ -515,13 +550,12 @@
           <div class="section-title"><h2>顧客マスター</h2><button class="mini-btn" onclick="openCustomerForm()">＋追加</button></div>
           <div class="notice">姓のみ登録がおすすめです。電話番号や詳しい住所は入れないでください。</div>
           ${state.customers.length ? state.customers.map(c => `
-            <div class="list-item" onclick="openCustomerForm('${c.id}')">
+            <div style="padding:12px 0;border-bottom:1px solid #eef3fb" onclick="openCustomerForm('${c.id}')">
               <div class="between"><strong>#${escapeHtml(c.code)} ${escapeHtml(c.lastName || '')}</strong><span class="muted">編集</span></div>
               <div class="muted">${escapeHtml(c.memo || 'メモなし')}</div>
               <div class="muted">${escapeHtml(c.frequentPickup || '')}${c.frequentPickup || c.frequentDropoff ? ' → ' : ''}${escapeHtml(c.frequentDropoff || '')}</div>
             </div>`).join('') : '<div class="empty">まだ顧客登録がありません。</div>'}
-        </div>
-      `;
+        </div>`;
     }
 
     function renderSettings() {
@@ -529,9 +563,9 @@
         <div class="card">
           <div class="section-title"><h2>表示設定</h2></div>
           <label>氏名の表示</label>
-          <select id="nameModeSelect" onchange="changeNameMode(this.value)">
-            <option value="lastname" ${state.config.nameMode === 'lastname' ? 'selected' : ''}>姓のみ</option>
-            <option value="full" ${state.config.nameMode === 'full' ? 'selected' : ''}>そのまま表示</option>
+          <select onchange="changeNameMode(this.value)">
+            <option value="lastname" ${state.config.nameMode === 'lastname' ? 'selected' : ''}>そのまま表示</option>
+            <option value="full" ${state.config.nameMode === 'full' ? 'selected' : ''}>フル表示</option>
             <option value="initial" ${state.config.nameMode === 'initial' ? 'selected' : ''}>イニシャル風</option>
             <option value="code" ${state.config.nameMode === 'code' ? 'selected' : ''}>顧客コード</option>
           </select>
@@ -546,53 +580,47 @@
           <div style="height:10px"></div>
           <button class="secondary" onclick="exportBackup()">バックアップを書き出す</button>
           <div class="hint">機種変更やキャッシュ削除に備えて、定期的な保存がおすすめです。</div>
-          <input id="restoreFileInput" type="file" accept="application/json,.json" onchange="restoreBackupFile(this)" style="display:none">
-          <button class="secondary" onclick="document.getElementById('restoreFileInput').click()">バックアップを復元する</button>
-          <div class="hint">復元すると、今の記録と顧客データはバックアップ内容で置き換わります。</div>
+          <input id="restoreJsonInput" type="file" accept="application/json,.json" onchange="restoreBackupFile(this)" style="display:none">
+          <button class="secondary" onclick="document.getElementById('restoreJsonInput').click()">バックアップを復元する</button>
+          <div class="hint">JSONバックアップから、記録と顧客マスターを戻せます。</div>
           <input id="restoreCsvInput" type="file" accept=".csv,text/csv" onchange="restoreCsvFile(this)" style="display:none">
           <button class="secondary" onclick="document.getElementById('restoreCsvInput').click()">CSVから記録を復元する</button>
-          <div class="hint">旧バージョンのCSVから記録を戻せます。おすすめは「今の記録をCSVで置き換える」です。顧客マスターはCSVでは戻りません。</div>
+          <div class="hint">旧バージョンのCSVも読めるように強化しました。おすすめは「今の記録をCSVで置き換える」です。顧客マスターはそのまま残ります。</div>
           <div style="height:10px"></div>
           <button class="danger" onclick="clearAllData()">全データ削除</button>
-        </div>
-      `;
+        </div>`;
+    }
+
+    function renderAll() {
+      renderHome();
+      renderHistory();
+      renderStats();
+      renderCustomers();
+      renderSettings();
     }
 
     function switchTab(tab) {
       state.activeTab = tab;
       document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
-      ['home','stats','customers','settings'].forEach(id => {
+      ['home','history','stats','customers','settings'].forEach(id => {
         document.getElementById('page-' + id).classList.toggle('hidden', id !== tab);
       });
-      document.getElementById('addRideFab').classList.toggle('hidden', tab !== 'home');
+      document.getElementById('addRideFab').classList.toggle('hidden', !(tab === 'home' || tab === 'history'));
       renderAll();
-    }
-
-    function renderAll() {
-      renderHome();
-      renderStats();
-      renderCustomers();
-      renderSettings();
     }
 
     function openSheet(html) {
       document.getElementById('sheetBody').innerHTML = html;
       document.getElementById('overlay').classList.add('show');
     }
-    function closeSheet() {
-      document.getElementById('overlay').classList.remove('show');
-    }
-
+    function closeSheet() { document.getElementById('overlay').classList.remove('show'); }
     function rideDiscountSelect(type) {
       const field = document.getElementById('discountValueWrap');
-      field.classList.toggle('hidden', type === 'none');
+      if (field) field.classList.toggle('hidden', type === 'none');
       calcPreviewTotal();
     }
-
     function fillFromCustomer(selectEl) {
-      const id = selectEl.value;
-      if (!id) return;
-      const c = state.customers.find(x => x.id === id);
+      const c = state.customers.find(x => x.id === selectEl.value);
       if (!c) return;
       document.getElementById('ride-name').value = c.lastName || '';
       document.getElementById('ride-pickup').value = c.frequentPickup || '';
@@ -602,75 +630,44 @@
     }
 
     function openRideForm(id='') {
-      const ride = state.rides.find(r => r.id === id) || {
-        id: '', date: todayStr(), time: nowTime(), name:'', pickup:'', dropoff:'', meter:0, careBase:0, wheelFee:WHEEL_DEFAULT, attend:0, highway:HIGHWAY_DEFAULT,
-        discountType:'none', discountValue:0, memo:'', total:0
-      };
+      const ride = state.rides.find(r => r.id === id) || normalizeRide({ date: todayStr(), time: nowTime() });
       state.editingRideId = id || null;
       openSheet(`
-        <div class="section-title"><h2>${id ? '記録を編集' : '記録を追加'}</h2><button class="mini-btn ghost" onclick="closeSheet()">閉じる</button></div>
+        <div class="section-title"><h2>${id ? '記録を編集' : '記録を追加'}</h2><button class="ghost mini-btn" onclick="closeSheet()">閉じる</button></div>
         <div class="grid-2">
-          <div>
-            <label>日付</label>
-            <input id="ride-date" type="date" value="${escapeHtml(ride.date)}">
-          </div>
+          <div><label>日付</label><input id="ride-date" type="date" value="${escapeHtml(ride.date)}"></div>
           <div>
             <label>時間</label>
-            <div class="grid-2" style="grid-template-columns:1fr auto; gap:8px">
+            <div class="grid-2" style="grid-template-columns:1fr auto;gap:8px">
               <input id="ride-time" type="time" value="${escapeHtml(ride.time)}" style="margin-bottom:0">
-              <button class="secondary mini-btn" onclick="document.getElementById('ride-time').value='${nowTime()}'; calcPreviewTotal()">現在時刻</button>
+              <button class="secondary mini-btn" onclick="document.getElementById('ride-time').value='${nowTime()}';calcPreviewTotal()">現在時刻</button>
             </div>
           </div>
         </div>
         <label>顧客マスターから選ぶ</label>
-        <select onchange="fillFromCustomer(this)">
-          <option value="">選ばない</option>
-          ${state.customers.map(c => `<option value="${c.id}">#${escapeHtml(c.code)} ${escapeHtml(c.lastName || '')}</option>`).join('')}
-        </select>
-        <label>お名前</label>
-        <input id="ride-name" placeholder="例：田中" value="${escapeHtml(ride.name)}">
-        <div class="hint">姓のみがおすすめです</div>
-        <label>お迎え場所</label>
-        <input id="ride-pickup" placeholder="例：〇〇病院" value="${escapeHtml(ride.pickup)}">
-        <label>行き先</label>
-        <input id="ride-dropoff" placeholder="例：△△ホーム" value="${escapeHtml(ride.dropoff)}">
+        <select onchange="fillFromCustomer(this)"><option value="">選ばない</option>${state.customers.map(c => `<option value="${c.id}">#${escapeHtml(c.code)} ${escapeHtml(c.lastName)}</option>`).join('')}</select>
+        <label>お名前</label><input id="ride-name" value="${escapeHtml(ride.name)}" placeholder="例：田中">
+        <div class="hint">CSV復元時に名前が見えるよう修正しました。</div>
+        <label>お迎え場所</label><input id="ride-pickup" value="${escapeHtml(ride.pickup)}">
+        <label>行き先</label><input id="ride-dropoff" value="${escapeHtml(ride.dropoff)}">
         <div class="grid-2">
-          <div>
-            <label>メーター運賃</label>
-            <input id="ride-meter" type="number" inputmode="numeric" value="${num(ride.meter)}" oninput="calcPreviewTotal()">
-          </div>
-          <div>
-            <label>基本介助料</label>
-            <input id="ride-careBase" type="number" inputmode="numeric" value="${num(ride.careBase)}" oninput="calcPreviewTotal()">
-          </div>
-          <div>
-            <label>車イス料金</label>
-            <input id="ride-wheelFee" type="number" inputmode="numeric" value="${num(ride.wheelFee)}" oninput="calcPreviewTotal()">
-          </div>
-          <div>
-            <label>付添料</label>
-            <input id="ride-attend" type="number" inputmode="numeric" value="${num(ride.attend)}" oninput="calcPreviewTotal()">
-          </div>
-          <div>
-            <label>高速料金</label>
-            <input id="ride-highway" type="number" inputmode="numeric" value="${num(ride.highway)}" oninput="calcPreviewTotal()">
-          </div>
+          <div><label>メーター運賃</label><input id="ride-meter" type="number" value="${num(ride.meter)}" oninput="calcPreviewTotal()"></div>
+          <div><label>基本介助料</label><input id="ride-careBase" type="number" value="${num(ride.careBase)}" oninput="calcPreviewTotal()"></div>
+          <div><label>車イス料金</label><input id="ride-wheelFee" type="number" value="${num(ride.wheelFee)}" oninput="calcPreviewTotal()"></div>
+          <div><label>付添料</label><input id="ride-attend" type="number" value="${num(ride.attend)}" oninput="calcPreviewTotal()"></div>
+          <div><label>高速料金</label><input id="ride-highway" type="number" value="${num(ride.highway)}" oninput="calcPreviewTotal()"></div>
         </div>
         <label>割引</label>
         <select id="ride-discountType" onchange="rideDiscountSelect(this.value)">
-          <option value="none" ${ride.discountType==='none' ? 'selected' : ''}>なし</option>
-          <option value="amount" ${ride.discountType==='amount' ? 'selected' : ''}>金額</option>
-          <option value="percent" ${ride.discountType==='percent' ? 'selected' : ''}>％</option>
+          <option value="none" ${ride.discountType==='none'?'selected':''}>なし</option>
+          <option value="amount" ${ride.discountType==='amount'?'selected':''}>金額</option>
+          <option value="percent" ${ride.discountType==='percent'?'selected':''}>％</option>
         </select>
-        <div id="discountValueWrap" class="${ride.discountType==='none' ? 'hidden' : ''}">
-          <input id="ride-discountValue" type="number" inputmode="numeric" value="${num(ride.discountValue)}" oninput="calcPreviewTotal()" placeholder="割引を入力">
-        </div>
-        <label>メモ</label>
-        <textarea id="ride-memo" placeholder="必要なメモだけ入力">${escapeHtml(ride.memo || '')}</textarea>
-        <div class="sum-box">合計 <strong id="previewTotal">${yen(calcTotal(ride))}</strong></div>
+        <div id="discountValueWrap" class="${ride.discountType==='none' ? 'hidden' : ''}"><input id="ride-discountValue" type="number" value="${num(ride.discountValue)}" oninput="calcPreviewTotal()"></div>
+        <label>メモ</label><textarea id="ride-memo">${escapeHtml(ride.memo || '')}</textarea>
+        <div class="sum-box">合計 <strong id="previewTotal">${yen(ride.total)}</strong></div>
         <button onclick="saveRide()">この内容で保存</button>
-        ${id ? '<div style="height:10px"></div><button class="danger" onclick="deleteRide(\'' + id + '\')">この記録を削除</button>' : ''}
-      `);
+        ${id ? `<div style="height:10px"></div><button class="danger" onclick="deleteRide('${id}')">この記録を削除</button>` : ''}`);
       setTimeout(calcPreviewTotal, 30);
     }
 
@@ -684,36 +681,33 @@
         discountType: document.getElementById('ride-discountType')?.value || 'none',
         discountValue: num(document.getElementById('ride-discountValue')?.value)
       };
-      const total = calcTotal(ride);
       const el = document.getElementById('previewTotal');
-      if (el) el.textContent = yen(total);
+      if (el) el.textContent = yen(calcTotal(ride));
     }
 
     function saveRide() {
-      const ride = {
+      const ride = normalizeRide({
         id: state.editingRideId || uid('ride'),
         date: document.getElementById('ride-date').value || todayStr(),
         time: document.getElementById('ride-time').value || nowTime(),
         name: document.getElementById('ride-name').value.trim(),
         pickup: document.getElementById('ride-pickup').value.trim(),
         dropoff: document.getElementById('ride-dropoff').value.trim(),
-        meter: num(document.getElementById('ride-meter').value),
-        careBase: num(document.getElementById('ride-careBase').value),
-        wheelFee: num(document.getElementById('ride-wheelFee').value),
-        attend: num(document.getElementById('ride-attend').value),
-        highway: num(document.getElementById('ride-highway').value),
+        meter: document.getElementById('ride-meter').value,
+        careBase: document.getElementById('ride-careBase').value,
+        wheelFee: document.getElementById('ride-wheelFee').value,
+        attend: document.getElementById('ride-attend').value,
+        highway: document.getElementById('ride-highway').value,
         discountType: document.getElementById('ride-discountType').value,
-        discountValue: num(document.getElementById('ride-discountValue')?.value),
+        discountValue: document.getElementById('ride-discountValue')?.value || 0,
         memo: document.getElementById('ride-memo').value.trim()
-      };
-      ride.total = calcTotal(ride);
+      });
       const idx = state.rides.findIndex(r => r.id === ride.id);
       if (idx >= 0) state.rides[idx] = ride; else state.rides.push(ride);
       saveRides();
       closeSheet();
       renderAll();
     }
-
     function deleteRide(id) {
       if (!confirm('この記録を削除しますか？')) return;
       state.rides = state.rides.filter(r => r.id !== id);
@@ -722,48 +716,35 @@
       renderAll();
     }
 
-    function nextCustomerCode() {
-      const nums = state.customers.map(c => num(c.code));
-      return String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3, '0');
-    }
-
     function openCustomerForm(id='') {
-      const c = state.customers.find(x => x.id === id) || { id:'', code: nextCustomerCode(), lastName:'', memo:'', frequentPickup:'', frequentDropoff:'' };
+      const c = state.customers.find(x => x.id === id) || normalizeCustomer({ code: nextCustomerCode() });
       state.editingCustomerId = id || null;
       openSheet(`
-        <div class="section-title"><h2>${id ? '顧客を編集' : '顧客を追加'}</h2><button class="mini-btn ghost" onclick="closeSheet()">閉じる</button></div>
-        <label>顧客コード</label>
-        <input id="cust-code" value="${escapeHtml(c.code)}">
-        <label>姓</label>
-        <input id="cust-lastName" value="${escapeHtml(c.lastName)}" placeholder="例：田中">
+        <div class="section-title"><h2>${id ? '顧客を編集' : '顧客を追加'}</h2><button class="ghost mini-btn" onclick="closeSheet()">閉じる</button></div>
+        <label>顧客コード</label><input id="cust-code" value="${escapeHtml(c.code)}">
+        <label>姓</label><input id="cust-lastName" value="${escapeHtml(c.lastName)}" placeholder="例：田中">
         <div class="hint">姓のみ登録がおすすめです</div>
-        <label>特徴メモ</label>
-        <input id="cust-memo" value="${escapeHtml(c.memo)}" placeholder="例：車イス利用あり">
-        <label>よく使うお迎え場所</label>
-        <input id="cust-pickup" value="${escapeHtml(c.frequentPickup)}">
-        <label>よく使う行き先</label>
-        <input id="cust-dropoff" value="${escapeHtml(c.frequentDropoff)}">
+        <label>特徴メモ</label><input id="cust-memo" value="${escapeHtml(c.memo)}" placeholder="例：車イス利用あり">
+        <label>よく使うお迎え場所</label><input id="cust-pickup" value="${escapeHtml(c.frequentPickup)}">
+        <label>よく使う行き先</label><input id="cust-dropoff" value="${escapeHtml(c.frequentDropoff)}">
         <button onclick="saveCustomer()">保存</button>
-        ${id ? '<div style="height:10px"></div><button class="danger" onclick="deleteCustomer(\'' + id + '\')">この顧客を削除</button>' : ''}
-      `);
+        ${id ? `<div style="height:10px"></div><button class="danger" onclick="deleteCustomer('${id}')">この顧客を削除</button>` : ''}`);
     }
-
     function saveCustomer() {
-      const c = {
+      const customer = normalizeCustomer({
         id: state.editingCustomerId || uid('cust'),
         code: document.getElementById('cust-code').value.trim() || nextCustomerCode(),
         lastName: document.getElementById('cust-lastName').value.trim(),
         memo: document.getElementById('cust-memo').value.trim(),
         frequentPickup: document.getElementById('cust-pickup').value.trim(),
         frequentDropoff: document.getElementById('cust-dropoff').value.trim()
-      };
-      const idx = state.customers.findIndex(x => x.id === c.id);
-      if (idx >= 0) state.customers[idx] = c; else state.customers.push(c);
+      });
+      const idx = state.customers.findIndex(c => c.id === customer.id);
+      if (idx >= 0) state.customers[idx] = customer; else state.customers.push(customer);
       saveCustomers();
       closeSheet();
       renderCustomers();
     }
-
     function deleteCustomer(id) {
       if (!confirm('この顧客を削除しますか？')) return;
       state.customers = state.customers.filter(c => c.id !== id);
@@ -772,36 +753,32 @@
       renderCustomers();
     }
 
-    function changeNameMode(v) {
-      state.config.nameMode = v;
-      saveConfig();
+    function changeNameMode(v) { state.config.nameMode = v; saveConfig(); renderAll(); }
+    function toggleAutoDelete(v) { state.config.autoDeleteYear = v; saveConfig(); }
+    function clearAllData() {
+      if (!confirm('全データを削除しますか？この操作は元に戻せません。')) return;
+      localStorage.removeItem(storageKeys.rides);
+      localStorage.removeItem(storageKeys.customers);
+      state.rides = [];
+      state.customers = [];
       renderAll();
-    }
-    function toggleAutoDelete(v) {
-      state.config.autoDeleteYear = v;
-      saveConfig();
     }
 
     function isIosLike() {
-      return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     }
-
-    async function saveBlobFile(blob, fileName, titleText='ファイル') {
+    async function saveBlobFile(blob, fileName, title='ファイル') {
       try {
         if (navigator.canShare && navigator.share) {
           const file = new File([blob], fileName, { type: blob.type || 'application/octet-stream' });
           if (navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: titleText });
+            await navigator.share({ files: [file], title });
             return true;
           }
         }
-      } catch (e) {
-        // share cancelなどは次の保存方法へフォールバック
-      }
-
+      } catch {}
       if (isIosLike()) {
-        return await new Promise((resolve) => {
+        return await new Promise(resolve => {
           try {
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -811,24 +788,17 @@
                 a.target = '_blank';
                 a.rel = 'noopener';
                 a.click();
-                setTimeout(() => {
-                  alert('保存画面が出ない時は、開いたページで共有ボタンから「ファイルに保存」を選んでください。');
-                }, 300);
+                setTimeout(() => alert('保存画面が出ない時は、開いたページで共有ボタンから「ファイルに保存」を選んでください。'), 300);
                 resolve(true);
-              } catch (err) {
-                resolve(false);
-              }
+              } catch { resolve(false); }
             };
             reader.readAsDataURL(blob);
-          } catch (err) {
-            resolve(false);
-          }
+          } catch { resolve(false); }
         });
       }
-
       try {
-        const a = document.createElement('a');
         const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
         a.href = url;
         a.download = fileName;
         document.body.appendChild(a);
@@ -836,72 +806,48 @@
         a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
         return true;
-      } catch (e) {
-        return false;
-      }
+      } catch { return false; }
     }
-
     async function exportCsv() {
-      if (!state.rides.length) { alert('書き出すデータがありません。'); return; }
-      const ok = confirm('個人情報が入っていないか確認してから書き出してください。CSVを書き出しますか？');
-      if (!ok) return;
+      if (!state.rides.length) return alert('書き出すデータがありません。');
+      if (!confirm('個人情報が入っていないか確認してから書き出してください。CSVを書き出しますか？')) return;
       const header = ['日付','時間','名前','お迎え場所','行き先','メーター運賃','基本介助料','車イス料金','付添料','高速料金','割引種別','割引値','合計','メモ'];
       const rows = state.rides.map(r => [r.date,r.time,r.name,r.pickup,r.dropoff,r.meter,r.careBase,r.wheelFee,r.attend,r.highway,r.discountType,r.discountValue,r.total,r.memo]);
-      const csv = [header, ...rows].map(row => row.map(v => '"' + String(v ?? '').replaceAll('"', '""') + '"').join(',')).join('\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const saved = await saveBlobFile(blob, 'taxi_records_' + todayStr() + '.csv', 'CSV書き出し');
-      if (!saved) alert('CSVの保存に失敗しました。Safariで開いて再度お試しください。');
+      const csv = [header, ...rows].map(row => row.map(v => '"' + String(v ?? '').replaceAll('"','""') + '"').join(',')).join('\n');
+      const saved = await saveBlobFile(new Blob([csv], { type: 'text/csv;charset=utf-8;' }), 'taxi_records_' + todayStr() + '.csv', 'CSV書き出し');
+      if (!saved) alert('CSVの保存に失敗しました。Safariで再度お試しください。');
     }
-
     async function exportBackup() {
       const data = {
         app: '介護タクシー運行記録アプリ',
-        version: 5,
+        version: 6,
         exportedAt: new Date().toISOString(),
-        config: {
-          autoDeleteYear: !!state.config.autoDeleteYear,
-          nameMode: state.config.nameMode || 'lastname'
-        },
+        config: { autoDeleteYear: !!state.config.autoDeleteYear, nameMode: state.config.nameMode || 'lastname' },
         rides: state.rides.map(normalizeRide),
         customers: state.customers.map(normalizeCustomer)
       };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8;' });
-      const saved = await saveBlobFile(blob, 'taxi_backup_' + todayStr() + '.json', 'バックアップ');
-      if (!saved) alert('バックアップの保存に失敗しました。Safariで開いて再度お試しください。');
+      const saved = await saveBlobFile(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8;' }), 'taxi_backup_' + todayStr() + '.json', 'バックアップ');
+      if (!saved) alert('バックアップの保存に失敗しました。Safariで再度お試しください。');
     }
-
     function restoreBackupFile(input) {
-      const file = input.files && input.files[0];
+      const file = input.files?.[0];
       if (!file) return;
       const reader = new FileReader();
       reader.onload = () => {
         try {
           const raw = JSON.parse(reader.result);
-          if (!raw || (!Array.isArray(raw.rides) && !Array.isArray(raw.customers))) {
-            throw new Error('形式が違います');
-          }
+          if (!raw || (!Array.isArray(raw.rides) && !Array.isArray(raw.customers))) throw new Error('bad');
           const rideCount = Array.isArray(raw.rides) ? raw.rides.length : 0;
           const customerCount = Array.isArray(raw.customers) ? raw.customers.length : 0;
-          const ok = confirm('バックアップを復元しますか？\n今あるデータは上書きされます。\n\n記録: ' + rideCount + '件\n顧客: ' + customerCount + '件');
-          if (!ok) {
-            input.value = '';
-            return;
-          }
-          const safeConfig = raw.config || {};
+          if (!confirm(`バックアップを復元しますか？\n今あるデータは上書きされます。\n\n記録: ${rideCount}件\n顧客: ${customerCount}件`)) { input.value = ''; return; }
           state.rides = (raw.rides || []).map(normalizeRide);
           state.customers = (raw.customers || []).map(normalizeCustomer);
-          state.config = {
-            ...state.config,
-            autoDeleteYear: typeof safeConfig.autoDeleteYear === 'boolean' ? safeConfig.autoDeleteYear : state.config.autoDeleteYear,
-            nameMode: safeConfig.nameMode || state.config.nameMode || 'lastname'
-          };
-          saveRides();
-          saveCustomers();
-          saveConfig();
-          renderAll();
+          const safeConfig = raw.config || {};
+          state.config = { ...state.config, autoDeleteYear: typeof safeConfig.autoDeleteYear === 'boolean' ? safeConfig.autoDeleteYear : state.config.autoDeleteYear, nameMode: safeConfig.nameMode || state.config.nameMode || 'lastname' };
+          saveRides(); saveCustomers(); saveConfig(); renderAll();
           alert('復元が完了しました。');
-        } catch (e) {
-          alert('バックアップの読み込みに失敗しました。\n別のファイルか、正しいJSONファイルか確認してください。');
+        } catch {
+          alert('バックアップの読み込みに失敗しました。正しいJSONファイルか確認してください。');
         }
         input.value = '';
       };
@@ -909,50 +855,52 @@
     }
 
     function normalizeCsvHeader(text='') {
-      return String(text).replace(/^\uFEFF/, '').replace(/\s+/g, '').trim().toLowerCase();
+      return String(text).replace(/^\uFEFF/, '').replace(/\s+/g,'').trim().toLowerCase();
     }
     function parseCsvText(text='') {
+      const src = String(text).replace(/\r\n/g,'\n').replace(/\r/g,'\n');
       const rows = [];
-      let row = [];
-      let cell = '';
-      let inQuotes = false;
-      const src = String(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      let row = [], cell = '', inQuotes = false;
       for (let i = 0; i < src.length; i++) {
         const ch = src[i];
         if (inQuotes) {
           if (ch === '"') {
-            if (src[i + 1] === '"') {
-              cell += '"';
-              i++;
-            } else {
-              inQuotes = false;
-            }
-          } else {
-            cell += ch;
-          }
+            if (src[i+1] === '"') { cell += '"'; i++; }
+            else inQuotes = false;
+          } else cell += ch;
         } else {
-          if (ch === '"') {
-            inQuotes = true;
-          } else if (ch === ',') {
-            row.push(cell);
-            cell = '';
-          } else if (ch === '\n') {
-            row.push(cell);
-            rows.push(row);
-            row = [];
-            cell = '';
-          } else {
-            cell += ch;
-          }
+          if (ch === '"') inQuotes = true;
+          else if (ch === ',') { row.push(cell); cell = ''; }
+          else if (ch === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
+          else cell += ch;
         }
       }
       row.push(cell);
       rows.push(row);
       return rows.filter(r => r.some(v => String(v || '').trim() !== ''));
     }
-    function csvGet(row, indexMap, names) {
-      for (const name of names) {
-        const idx = indexMap[normalizeCsvHeader(name)];
+    function csvHeaderScore(headerRow) {
+      const joined = headerRow.map(normalizeCsvHeader).join('|');
+      let score = 0;
+      ['日付','date','時間','time','名前','氏名','利用者名','お名前','メーター運賃','行き先'].forEach(k => { if (joined.includes(normalizeCsvHeader(k))) score++; });
+      return score;
+    }
+    function decodeCsvArrayBuffer(buffer) {
+      const decoders = ['utf-8', 'shift-jis', 'euc-jp'];
+      let bestText = '', bestScore = -1;
+      for (const encName of decoders) {
+        try {
+          const text = new TextDecoder(encName).decode(buffer);
+          const rows = parseCsvText(text);
+          const score = rows.length ? csvHeaderScore(rows[0]) : 0;
+          if (score > bestScore) { bestScore = score; bestText = text; }
+        } catch {}
+      }
+      return bestText || new TextDecoder('utf-8').decode(buffer);
+    }
+    function csvGet(row, indexMap, aliases) {
+      for (const alias of aliases) {
+        const idx = indexMap[normalizeCsvHeader(alias)];
         if (idx !== undefined) return String(row[idx] ?? '').trim();
       }
       return '';
@@ -964,98 +912,77 @@
     }
     function truthyLike(value) {
       const v = String(value || '').trim().toLowerCase();
-      return ['1','true','yes','あり','有','利用','使用','on','y'].includes(v);
+      return ['1','true','yes','あり','有','利用','使用','on','y','○','◯'].includes(v);
     }
     function inferDiscountType(rawType, rawValue) {
       const type = normalizeCsvHeader(rawType);
-      if (type.includes('percent') || type === '％' || type === '%') return 'percent';
-      if (type.includes('amount') || type.includes('金額')) return 'amount';
-      const value = String(rawValue || '').trim();
-      if (value.includes('%') || value.includes('％')) return 'percent';
-      return parseMoneyLike(value) ? 'amount' : 'none';
+      const val = String(rawValue || '').trim();
+      if (type.includes('percent') || type === '%' || type === '％' || val.includes('%') || val.includes('％')) return 'percent';
+      if (type.includes('amount') || type.includes('金額') || parseMoneyLike(val)) return 'amount';
+      return 'none';
     }
     function restoreCsvFile(input) {
-      const file = input.files && input.files[0];
+      const file = input.files?.[0];
       if (!file) return;
       const reader = new FileReader();
       reader.onload = () => {
         try {
-          const rows = parseCsvText(reader.result);
+          const text = decodeCsvArrayBuffer(reader.result);
+          const rows = parseCsvText(text);
           if (rows.length < 2) throw new Error('empty');
           const header = rows[0].map(normalizeCsvHeader);
           const indexMap = {};
           header.forEach((h, i) => { if (!(h in indexMap)) indexMap[h] = i; });
           const imported = [];
           for (const row of rows.slice(1)) {
-            const date = csvGet(row, indexMap, ['日付', 'date']);
-            const time = csvGet(row, indexMap, ['時間', 'time']);
-            const name = csvGet(row, indexMap, ['名前', '氏名', 'name']);
-            const pickup = csvGet(row, indexMap, ['お迎え場所', '迎え場所', 'pickup']);
-            const dropoff = csvGet(row, indexMap, ['行き先', 'dropoff', 'destination']);
-            const meter = parseMoneyLike(csvGet(row, indexMap, ['メーター運賃', 'meter']));
-            const careBase = parseMoneyLike(csvGet(row, indexMap, ['基本介助料', 'carebase']));
-            const attend = parseMoneyLike(csvGet(row, indexMap, ['付添料', '付添', 'attend']));
-            const highway = parseMoneyLike(csvGet(row, indexMap, ['高速料金', 'highway']));
-            const wheelRaw = csvGet(row, indexMap, ['車イス料金', '車イス', 'wheelfee', 'wheel']);
+            const date = normalizeDateInput(csvGet(row, indexMap, ['日付','date','利用日','乗車日','実施日']));
+            const time = csvGet(row, indexMap, ['時間','time','時刻','利用時間','乗車時間']);
+            const name = csvGet(row, indexMap, ['名前','氏名','利用者名','利用者','お名前','お客様名','顧客名','name']);
+            const pickup = csvGet(row, indexMap, ['お迎え場所','迎え場所','お迎え','乗車地','出発地','pickup']);
+            const dropoff = csvGet(row, indexMap, ['行き先','降車地','目的地','送り先','dropoff','destination']);
+            const meter = parseMoneyLike(csvGet(row, indexMap, ['メーター運賃','meter','運賃']));
+            const careBase = parseMoneyLike(csvGet(row, indexMap, ['基本介助料','carebase','介助料']));
+            const wheelRaw = csvGet(row, indexMap, ['車イス料金','車イス','車いす','wheelfee','wheel']);
+            const attend = parseMoneyLike(csvGet(row, indexMap, ['付添料','付添','付添い料','attend']));
+            const highway = parseMoneyLike(csvGet(row, indexMap, ['高速料金','高速','highway']));
+            const rawDiscountType = csvGet(row, indexMap, ['割引種別','discounttype']);
+            const rawDiscountValue = csvGet(row, indexMap, ['割引値','割引','discountvalue','discount']);
+            const memoParts = [];
+            const memoRaw = csvGet(row, indexMap, ['メモ','備考','memo']);
+            if (memoRaw) memoParts.push(memoRaw);
             let wheelFee = parseMoneyLike(wheelRaw);
-            const notes = [];
-            if (!wheelFee && truthyLike(wheelRaw)) notes.push('旧CSV: 車イス利用あり');
-            const rawDiscountType = csvGet(row, indexMap, ['割引種別', 'discounttype']);
-            const rawDiscountValue = csvGet(row, indexMap, ['割引値', '割引', 'discountvalue', 'discount']);
-            const discountType = inferDiscountType(rawDiscountType, rawDiscountValue);
-            const discountValue = parseMoneyLike(rawDiscountValue.replace(/[％%]/g, ''));
-            const memo = [csvGet(row, indexMap, ['メモ', 'memo']), ...notes].filter(Boolean).join(' / ');
+            if (!wheelFee && truthyLike(wheelRaw)) memoParts.push('旧CSV: 車イス利用あり');
             const ride = normalizeRide({
               id: uid('ride'),
-              date: date || todayStr(),
-              time,
-              name,
-              pickup,
-              dropoff,
-              meter,
-              careBase,
-              wheelFee,
-              attend,
-              highway,
-              discountType,
-              discountValue,
-              memo
+              date, time, name, pickup, dropoff, meter, careBase, wheelFee, attend, highway,
+              discountType: inferDiscountType(rawDiscountType, rawDiscountValue),
+              discountValue: parseMoneyLike(String(rawDiscountValue).replace(/[％%]/g,'')),
+              memo: memoParts.join(' / ')
             });
-            const hasAny = [date,time,name,pickup,dropoff,meter,careBase,wheelRaw,attend,highway,rawDiscountValue,memo].some(v => String(v || '').trim() !== '' && String(v || '') !== '0');
+            const hasAny = [name, pickup, dropoff, meter, careBase, wheelRaw, attend, highway, rawDiscountValue, time, memoRaw].some(v => String(v || '').trim() !== '' && String(v || '') !== '0');
             if (hasAny) imported.push(ride);
           }
           if (!imported.length) throw new Error('no rows');
-          const ok = confirm('CSVから記録を復元しますか？\n\nおすすめ: 今の記録をCSVで置き換える\n\n読み込む記録: ' + imported.length + '件\n顧客マスターはそのまま残ります。');
-          if (!ok) {
-            input.value = '';
-            return;
-          }
+          const withNames = imported.filter(r => r.name).length;
+          const withPastDates = imported.filter(r => r.date !== todayStr()).length;
+          if (!confirm(`CSVから記録を復元しますか？\n\n読み込む記録: ${imported.length}件\n名前あり: ${withNames}件\n今日以外の日付: ${withPastDates}件\n\n今ある記録はCSVで置き換えます。顧客マスターは残ります。`)) { input.value = ''; return; }
           state.rides = imported;
           saveRides();
-          renderAll();
-          alert('CSVの復元が完了しました。');
+          switchTab('history');
+          alert('CSVの復元が完了しました。履歴タブで過去データを確認できます。名前や日付もあわせて確認してください。');
         } catch (e) {
-          alert('CSVの読み込みに失敗しました。\n旧バージョンのCSVか、正しいCSVファイルか確認してください。');
+          alert('CSVの読み込みに失敗しました。旧バージョンのCSVか、正しいCSVファイルか確認してください。');
         }
         input.value = '';
       };
-      reader.readAsText(file, 'utf-8');
-    }
-
-    function clearAllData() {
-      if (!confirm('全データを削除しますか？この操作は元に戻せません。')) return;
-      localStorage.removeItem(storageKeys.rides);
-      localStorage.removeItem(storageKeys.customers);
-      state.rides = [];
-      state.customers = [];
-      renderAll();
+      reader.readAsArrayBuffer(file);
     }
 
     function showLockScreen() {
       document.getElementById('appRoot').classList.add('hidden');
       document.getElementById('lockScreen').classList.remove('hidden');
       state.lockPin = '';
-      renderPinDots('lockDots', state.lockPin.length);
+      renderPinDots('lockDots', 0);
       document.getElementById('lockError').classList.add('hidden');
     }
     function showApp() {
@@ -1068,29 +995,30 @@
     function renderPinDots(id, count) {
       document.getElementById(id).innerHTML = Array.from({length:4}).map((_,i) => `<div class="pin-dot ${i < count ? 'filled' : ''}"></div>`).join('');
     }
-    function buildKeypad(containerId, onPressName) {
-      const wrap = document.getElementById(containerId);
+    function buildKeypad(containerId, fnName) {
       const nums = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
-      wrap.innerHTML = nums.map(n => n ? `<button onclick="${onPressName}('${n}')">${n}</button>` : '<div></div>').join('');
+      document.getElementById(containerId).innerHTML = nums.map(n => n ? `<button onclick="${fnName}('${n}')">${n}</button>` : '<div></div>').join('');
     }
     function setupPress(key) {
       if (key === '⌫') {
-        if (!state.setupConfirm) state.setupPin = state.setupPin.slice(0,-1); else state.setupConfirm = state.setupConfirm.slice(0,-1);
+        if (state.setupStage === 'first') state.setupPin = state.setupPin.slice(0,-1);
+        else state.setupConfirm = state.setupConfirm.slice(0,-1);
       } else {
-        if (!state.setupConfirm && state.setupPin.length < 4) state.setupPin += key;
-        else if (state.setupPin.length === 4 && state.setupConfirm.length < 4) state.setupConfirm += key;
+        if (state.setupStage === 'first' && state.setupPin.length < 4) state.setupPin += key;
+        else if (state.setupStage === 'confirm' && state.setupConfirm.length < 4) state.setupConfirm += key;
       }
-      const count = !state.setupConfirm ? state.setupPin.length : state.setupConfirm.length;
-      renderPinDots('setupDots', count);
-      if (state.setupPin.length === 4 && !state.setupConfirm) {
+      renderPinDots('setupDots', state.setupStage === 'first' ? state.setupPin.length : state.setupConfirm.length);
+      if (state.setupStage === 'first' && state.setupPin.length === 4) {
+        state.setupStage = 'confirm';
         document.getElementById('setupTitle').textContent = 'もう一度入力してください';
         document.getElementById('setupText').textContent = '確認のため同じ4桁を入力します。';
-        state.setupConfirm = '';
         renderPinDots('setupDots', 0);
-      } else if (state.setupPin.length === 4 && state.setupConfirm.length === 4) {
+      } else if (state.setupStage === 'confirm' && state.setupConfirm.length === 4) {
         if (state.setupPin !== state.setupConfirm) {
           alert('パスコードが一致しません。もう一度やり直してください。');
-          state.setupPin = ''; state.setupConfirm = '';
+          state.setupPin = '';
+          state.setupConfirm = '';
+          state.setupStage = 'first';
           document.getElementById('setupTitle').textContent = '4桁のパスコードを決める';
           document.getElementById('setupText').textContent = 'あとでアプリを開く時に使います。';
           renderPinDots('setupDots', 0);
@@ -1137,12 +1065,13 @@
       document.getElementById('addRideFab').addEventListener('click', () => openRideForm());
       document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
       document.getElementById('overlay').addEventListener('click', e => { if (e.target.id === 'overlay') closeSheet(); });
-      document.addEventListener('visibilitychange', () => { if (document.hidden && state.config.passcode) showLockScreen(); });
-      ['click','input','touchstart'].forEach(ev => document.addEventListener(ev, () => state.lastActive = Date.now(), { passive:true }));
+      ['click','touchstart','input'].forEach(ev => document.addEventListener(ev, () => state.lastActive = Date.now(), { passive: true }));
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden && state.config.passcode) showLockScreen();
+      });
       setInterval(() => {
-        if (!document.getElementById('appRoot').classList.contains('hidden') && Date.now() - state.lastActive > 60000 && state.config.passcode) showLockScreen();
+        if (!document.getElementById('appRoot').classList.contains('hidden') && state.config.passcode && Date.now() - state.lastActive > 60000) showLockScreen();
       }, 5000);
-      window.addEventListener('beforeprint', () => alert('スクリーンショットや印刷の前に、個人情報が出ていないか確認してください。'));
       if (!state.config.agreed) document.getElementById('privacyScreen').classList.remove('hidden');
       else if (!state.config.passcode) document.getElementById('passcodeSetupScreen').classList.remove('hidden');
       else showLockScreen();
