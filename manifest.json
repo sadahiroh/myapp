@@ -1,7 +1,7 @@
 {
   "name": "介護タクシー運行記録アプリ",
   "short_name": "運行記録",
-  "start_url": "./index.html?v=6",
+  "start_url": "./index.html?v=7",
   "display": "standalone",
   "background_color": "#eef5ff",
   "theme_color": "#1d6fd6",
