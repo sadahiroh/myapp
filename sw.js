@@ -1,4 +1,4 @@
-const CACHE = 'taxi-app-v6';
+const CACHE = 'taxi-app-v7';
 const FILES = ['./', './index.html?v=6', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));

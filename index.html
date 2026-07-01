@@ -321,6 +321,8 @@
       rides: [],
       customers: [],
       activeTab: 'home',
+      statsMonth: todayStr().slice(0,7),
+      historyFocusDate: '',
       setupPin: '',
       setupStage: 'first',
       setupConfirm: '',
@@ -507,11 +509,27 @@
         </div>`;
     }
 
+    function openHistoryDate(date='') {
+      state.historyFocusDate = date || '';
+      state.activeTab = 'history';
+      renderAll();
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'history'));
+      ['home','history','stats','customers','settings'].forEach(id => {
+        document.getElementById('page-' + id).classList.toggle('hidden', id !== 'history');
+      });
+      document.getElementById('addRideFab').classList.remove('hidden');
+    }
+
     function renderHistory() {
-      const groups = groupByDate(ridesAllDesc());
+      const baseGroups = groupByDate(ridesAllDesc());
+      const groups = state.historyFocusDate ? baseGroups.filter(([date]) => date === state.historyFocusDate) : baseGroups;
       document.getElementById('page-history').innerHTML = `
         <div class="card">
-          <div class="section-title"><h2>履歴</h2><span class="muted">すべての日の記録</span></div>
+          <div class="section-title">
+            <h2>履歴</h2>
+            ${state.historyFocusDate ? '<button class="ghost mini-btn" onclick="openHistoryDate(\'\')">一覧に戻る</button>' : '<span class="muted">すべての日の記録</span>'}
+          </div>
+          ${state.historyFocusDate ? `<div class="date-group-title">${state.historyFocusDate} の一覧</div>` : ''}
           ${groups.length ? groups.map(([date, items]) => `
             <div style="margin-bottom:16px">
               <div class="date-group-title">${date} ・ ${items.length}件 ・ ${yen(totalOf(items))}</div>
@@ -520,15 +538,27 @@
         </div>`;
     }
 
+    function moveStatsMonth(step) {
+      const [y, m] = (state.statsMonth || todayStr().slice(0,7)).split('-').map(Number);
+      const d = new Date(y, (m - 1) + step, 1);
+      state.statsMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}`;
+      renderStats();
+    }
+
     function renderStats() {
-      const currentMonth = todayStr().slice(0,7);
+      const currentMonth = state.statsMonth || todayStr().slice(0,7);
       const monthRides = state.rides.filter(r => (r.date || '').slice(0,7) === currentMonth);
       const dayMap = {};
       monthRides.forEach(r => { dayMap[r.date] = (dayMap[r.date] || 0) + num(r.total); });
       const days = Object.entries(dayMap).sort((a,b) => a[0] < b[0] ? 1 : -1);
       document.getElementById('page-stats').innerHTML = `
         <div class="card">
-          <div class="section-title"><h2>今月の集計</h2><span class="muted">${currentMonth.replace('-', '年')}月</span></div>
+          <div class="section-title"><h2>月別の集計</h2><span class="muted">左右で月を切り替え</span></div>
+          <div class="between" style="margin-bottom:10px; gap:8px; align-items:center;">
+            <button class="ghost mini-btn" style="width:auto" onclick="moveStatsMonth(-1)">← 前の月</button>
+            <strong style="font-size:18px; color:var(--primary-dark)">${currentMonth.replace('-', '年')}月</strong>
+            <button class="ghost mini-btn" style="width:auto" onclick="moveStatsMonth(1)">次の月 →</button>
+          </div>
           <div class="grid-2">
             <div class="card" style="margin:0"><div class="muted">売上合計</div><div class="total">${yen(totalOf(monthRides))}</div></div>
             <div class="card" style="margin:0"><div class="muted">件数</div><div class="total">${monthRides.length}件</div></div>
@@ -540,7 +570,8 @@
         </div>
         <div class="card">
           <div class="section-title"><h2>日ごとの売上</h2><button class="ghost mini-btn" onclick="exportCsv()">CSV書き出し</button></div>
-          ${days.length ? days.map(([date,total]) => `<div class="between" style="padding:12px 0;border-bottom:1px solid #eef3fb"><span>${date}</span><strong>${yen(total)}</strong></div>`).join('') : '<div class="empty">今月のデータがありません。</div>'}
+          <div class="hint">日付を押すと、その日の一覧を履歴で開けます。</div>
+          ${days.length ? days.map(([date,total]) => `<button class="ghost" style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border:none;border-bottom:1px solid #eef3fb;border-radius:0;background:transparent;width:100%" onclick="openHistoryDate('${date}')"><span>${date}</span><strong>${yen(total)}</strong></button>`).join('') : '<div class="empty">この月のデータがありません。</div>'}
         </div>`;
     }
 
@@ -601,6 +632,7 @@
 
     function switchTab(tab) {
       state.activeTab = tab;
+      if (tab === 'history') state.historyFocusDate = '';
       document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
       ['home','history','stats','customers','settings'].forEach(id => {
         document.getElementById('page-' + id).classList.toggle('hidden', id !== tab);
